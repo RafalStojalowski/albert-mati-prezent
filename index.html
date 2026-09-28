@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#1f6f5c">
+  <title>Gra na Zaspie</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="map"></div>
+
+  <header class="topbar">
+    <span class="title">Gra na Zaspie</span>
+    <span class="progress" id="progress">0/5</span>
+  </header>
+
+  <div class="gps-status" id="gpsStatus">Szukam sygnału GPS…</div>
+
+  <div class="controls">
+    <button class="round-btn" id="btnCenter" title="Pokaż moją pozycję" aria-label="Pokaż moją pozycję">
+      <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="4" fill="currentColor"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4" stroke="currentColor" stroke-width="2"/></svg>
+    </button>
+    <button class="round-btn" id="btnMenu" title="Menu" aria-label="Menu">
+      <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="5" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/></svg>
+    </button>
+  </div>
+
+  <div class="menu hidden" id="menu">
+    <button id="btnReset">Wyzeruj postęp</button>
+    <button id="btnCloseMenu">Zamknij</button>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+
+  <div class="overlay" id="startScreen">
+    <div class="card">
+      <h1>Gra na Zaspie</h1>
+      <p>Chodź po dzielnicy i odwiedź wszystkie punkty na mapie. Postęp zapisuje się w telefonie.</p>
+      <p class="hint">Aplikacja poprosi o dostęp do lokalizacji. Trzymaj ekran włączony podczas gry.</p>
+      <button class="primary" id="btnStart">Start</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

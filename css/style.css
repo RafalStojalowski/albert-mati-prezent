@@ -1,0 +1,250 @@
+:root {
+  --accent: #1f6f5c;
+  --accent-light: #2fa88a;
+  --done: #2e9d4b;
+  --ink: #1d2327;
+  --panel: rgba(255, 255, 255, 0.95);
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  background: #e8e8e8;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---------- Pasek górny ---------- */
+.topbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  font-weight: 600;
+}
+.progress {
+  background: var(--accent);
+  color: #fff;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gps-status {
+  position: absolute;
+  top: 66px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 4px 12px;
+  font-size: 13px;
+  background: var(--panel);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+}
+.gps-status.ok { display: none; }
+.gps-status.error { background: #c0392b; color: #fff; }
+
+/* ---------- Przyciski ---------- */
+.controls {
+  position: absolute;
+  right: 12px;
+  bottom: 28px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.round-btn {
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+  display: grid;
+  place-items: center;
+}
+.round-btn.active { background: var(--accent); color: #fff; }
+
+.menu {
+  position: absolute;
+  right: 70px;
+  bottom: 28px;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.menu button {
+  border: none;
+  background: none;
+  padding: 14px 20px;
+  font-size: 15px;
+  text-align: left;
+}
+.menu button + button { border-top: 1px solid #ddd; }
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 100px;
+  transform: translateX(-50%);
+  z-index: 1002;
+  max-width: calc(100% - 32px);
+  padding: 12px 20px;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  text-align: center;
+  font-weight: 600;
+  animation: toast-in 0.3s ease-out;
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.hidden { display: none !important; }
+
+/* ---------- Ekran startowy ---------- */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(20, 40, 35, 0.75);
+}
+.card {
+  width: 100%;
+  max-width: 380px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.card h1 { margin: 0 0 12px; color: var(--accent); }
+.card .hint { font-size: 14px; color: #666; }
+.primary {
+  margin-top: 8px;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ---------- Znaczniki punktów ---------- */
+.spot-icon { background: none; border: none; }
+.spot {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  border: 3px solid #fff;
+  box-shadow: var(--shadow);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 800;
+}
+.spot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-light);
+  animation: pulse 2s ease-out infinite;
+}
+.spot.visited { background: var(--done); }
+.spot.visited::after { display: none; }
+@keyframes pulse {
+  from { transform: scale(1); opacity: 0.8; }
+  to   { transform: scale(2); opacity: 0; }
+}
+
+/* ---------- Ludzik gracza ---------- */
+.player-icon { background: none; border: none; }
+.walker-wrap { width: 40px; height: 60px; transition: transform 0.2s; }
+.walker-wrap.facing-left { transform: scaleX(-1); }
+
+.walker {
+  width: 40px;
+  height: 60px;
+  overflow: visible;
+  filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff);
+}
+.walker .shadow { fill: rgba(0, 0, 0, 0.25); }
+.walker .limb,
+.walker .torso {
+  stroke: var(--accent);
+  stroke-width: 5;
+  stroke-linecap: round;
+  fill: none;
+}
+.walker .back { stroke: #16574a; }
+.walker .head { fill: var(--accent); }
+
+.walker .leg, .walker .arm, .walker .figure {
+  transform-box: view-box;
+}
+.walker .leg { transform-origin: 20px 34px; }
+.walker .arm { transform-origin: 20px 20px; }
+.walker .figure { transform-origin: 20px 56px; }
+
+/* Stan spoczynku: lekkie "oddychanie" */
+.walker .figure { animation: breathe 2.4s ease-in-out infinite; }
+@keyframes breathe {
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(1.03); }
+}
+
+/* Stan chodzenia */
+.walking .walker .figure { animation: bob 0.35s ease-in-out infinite alternate; }
+.walking .walker .leg.front,
+.walking .walker .arm.back  { animation: swing-a 0.7s ease-in-out infinite alternate; }
+.walking .walker .leg.back,
+.walking .walker .arm.front { animation: swing-b 0.7s ease-in-out infinite alternate; }
+
+@keyframes bob {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-2px); }
+}
+@keyframes swing-a {
+  from { transform: rotate(28deg); }
+  to   { transform: rotate(-28deg); }
+}
+@keyframes swing-b {
+  from { transform: rotate(-28deg); }
+  to   { transform: rotate(28deg); }
+}
