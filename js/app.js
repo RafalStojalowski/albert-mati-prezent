@@ -31,6 +31,8 @@
   }
 
   const progress = loadProgress();
+  // Usuń z zapisu punkty, których już nie ma w konfiguracji
+  progress.visited = progress.visited.filter((id) => CFG.spots.some((s) => s.id === id));
 
   // ---------- Pomocnicze ----------
   function distance(a, b) {
@@ -108,6 +110,49 @@
       marker.setIcon(spotIcon(index, progress.visited.includes(spot.id)));
     });
     $('progress').textContent = `${progress.visited.length}/${CFG.spots.length}`;
+    updateArButton();
+  }
+
+  // ---------- Kamera AR ----------
+  const AR_MODULE_URL = new URL('js/ar.js', document.baseURI).href;
+  let arModule = null;
+  let arActive = false;
+
+  // Pierwszy odwiedzony punkt z obiektami AR
+  function unlockedArSpot() {
+    return CFG.spots.find((s) => s.ar && progress.visited.includes(s.id)) || null;
+  }
+
+  function updateArButton() {
+    const spot = unlockedArSpot();
+    $('btnAr').classList.toggle('hidden', !spot || arActive);
+    // Wczytujemy moduł AR zawczasu, żeby start po stuknięciu był natychmiastowy
+    if (spot && !arModule) arModule = import(AR_MODULE_URL);
+  }
+
+  async function openAr() {
+    const spot = unlockedArSpot();
+    if (!spot || arActive) return;
+    // Liczymy od aktualnej pozycji gracza, jeśli GPS jest dokładny; inaczej od punktu
+    const origin = playerPos && lastAccuracy <= 25
+      ? { lat: playerPos.lat, lng: playerPos.lng }
+      : { lat: spot.lat, lng: spot.lng };
+    arActive = true;
+    updateArButton();
+    try {
+      const mod = await arModule;
+      await mod.startAR({
+        origin,
+        targets: spot.ar.targets,
+        overlay: $('arOverlay'),
+        onEnd: () => { arActive = false; updateArButton(); },
+      });
+    } catch (e) {
+      console.error(e);
+      arActive = false;
+      updateArButton();
+      toast('Nie udało się uruchomić kamery: ' + (e.message || e), 5000);
+    }
   }
 
   function checkSpots(pos, accuracy) {
@@ -125,6 +170,7 @@
         } else {
           toast(`Odwiedzono: ${spot.name} (${progress.visited.length}/${CFG.spots.length})`);
         }
+        if (spot.ar) setTimeout(() => toast('Odblokowano kamerę! 📷', 4000), 3500);
       }
     });
   }
@@ -148,6 +194,7 @@
   let playerMarker = null;
   let accuracyCircle = null;
   let playerPos = null;       // ostatnia docelowa pozycja (L.LatLng)
+  let lastAccuracy = Infinity;
   let displayPos = null;      // aktualnie wyświetlana pozycja (w trakcie animacji)
   let anchorPos = null;       // punkt odniesienia do wykrywania ruchu
   let lastFixTime = 0;
@@ -228,6 +275,7 @@
     const pos = L.latLng(lat, lng);
     const now = Date.now();
     const first = !playerPos;
+    lastAccuracy = accuracy;
 
     ensurePlayerMarker(pos);
     accuracyCircle.setRadius(accuracy);
@@ -338,6 +386,8 @@
     setFollow(true);
     if (displayPos) map.setView(displayPos, Math.max(map.getZoom(), 17));
   });
+
+  $('btnAr').addEventListener('click', openAr);
 
   $('btnMenu').addEventListener('click', () => $('menu').classList.toggle('hidden'));
   $('btnCloseMenu').addEventListener('click', () => $('menu').classList.add('hidden'));

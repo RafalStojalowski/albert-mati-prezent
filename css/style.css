@@ -248,3 +248,101 @@ html, body {
   from { transform: rotate(-28deg); }
   to   { transform: rotate(28deg); }
 }
+
+/* ---------- Przycisk kamery ---------- */
+.ar-open {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+  animation: ar-open-pulse 1.6s ease-in-out infinite;
+}
+@keyframes ar-open-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(47, 168, 138, 0.7), var(--shadow); }
+  50%      { box-shadow: 0 0 0 12px rgba(47, 168, 138, 0), var(--shadow); }
+}
+
+/* ---------- Widok AR ---------- */
+.ar-video, .ar-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.ar-video { z-index: 3000; object-fit: cover; background: #000; }
+.ar-canvas { z-index: 3001; }
+
+.ar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3002;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+  background: transparent;
+  color: #fff;
+  pointer-events: none;
+}
+.ar-overlay button { pointer-events: auto; }
+
+.ar-top {
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 12px;
+  text-align: center;
+}
+.ar-label { font-weight: 700; font-size: 17px; }
+.ar-hint { font-size: 14px; margin-top: 4px; opacity: 0.9; }
+
+.ar-crosshair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
+.ar-crosshair::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.ar-bottom {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.ar-bottom button {
+  min-width: 52px;
+  height: 52px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 26px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+}
+.ar-bottom .ar-calibrate { background: var(--accent); }
+.ar-bottom .ar-close { background: rgba(192, 57, 43, 0.85); }

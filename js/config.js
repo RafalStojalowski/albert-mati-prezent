@@ -10,12 +10,26 @@ window.GAME_CONFIG = {
   // Z jakiej odległości (w metrach) punkt uznajemy za odwiedzony
   reachRadius: 25,
 
-  // Punkty na mapie – na razie przykładowe, rozrzucone po Zaspie
   spots: [
-    { id: 'p1', name: 'Punkt 1', lat: 54.3948, lng: 18.6060 },
-    { id: 'p2', name: 'Punkt 2', lat: 54.3940, lng: 18.6105 },
-    { id: 'p3', name: 'Punkt 3', lat: 54.3912, lng: 18.6000 },
-    { id: 'p4', name: 'Punkt 4', lat: 54.3892, lng: 18.6041 },
-    { id: 'p5', name: 'Punkt 5', lat: 54.3881, lng: 18.5998 },
+    {
+      id: 'p1',
+      name: 'Punkt 1',
+      lat: 54.393750,   // 54°23'37.5"N
+      lng: 18.610361,   // 18°36'37.3"E
+
+      // Po odwiedzeniu punktu odblokowuje się kamera z obiektami AR
+      ar: {
+        targets: [
+          {
+            name: 'Boisko',
+            lat: 54.393667,   // 54°23'37.2"N
+            lng: 18.609222,   // 18°36'33.2"E
+            image: 'src/przemo.jpg',
+            width: 14,        // szerokość zdjęcia w metrach (wysokość wg proporcji)
+            elevation: 4,     // dolna krawędź zdjęcia nad ziemią, w metrach
+          },
+        ],
+      },
+    },
   ],
 };

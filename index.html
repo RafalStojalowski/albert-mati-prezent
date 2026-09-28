@@ -32,7 +32,24 @@
     <button id="btnCloseMenu">Zamknij</button>
   </div>
 
+  <button class="ar-open hidden" id="btnAr">📷 Otwórz kamerę</button>
+
   <div class="toast hidden" id="toast"></div>
+
+  <!-- Nakładka widoku AR (w WebXR jako dom-overlay) -->
+  <div class="ar-overlay hidden" id="arOverlay">
+    <div class="ar-top">
+      <div class="ar-label"></div>
+      <div class="ar-hint"></div>
+    </div>
+    <div class="ar-crosshair"></div>
+    <div class="ar-bottom">
+      <button class="ar-left" aria-label="Obróć w lewo">◀</button>
+      <button class="ar-calibrate">Kalibruj</button>
+      <button class="ar-right" aria-label="Obróć w prawo">▶</button>
+      <button class="ar-close" aria-label="Zamknij kamerę">✕</button>
+    </div>
+  </div>
 
   <div class="overlay" id="startScreen">
     <div class="card">
