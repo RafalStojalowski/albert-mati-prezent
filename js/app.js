@@ -5,6 +5,8 @@
 
   // Tryb testowy: dodaj ?debug do adresu, wtedy klik na mapie "prowadzi" ludzika
   const DEBUG = new URLSearchParams(location.search).has('debug');
+  const DEV_URL = new URLSearchParams(location.search).has('devmode');
+  let devModeActive = false;
 
   // ---------- Parametry ruchu ----------
   const WALK_SPEED_THRESHOLD = 0.6;  // m/s – powyżej tego uznajemy, że gracz idzie
@@ -78,38 +80,57 @@
   // ---------- Punkty ----------
   const spotMarkers = {};
 
-  function spotIcon(index, visited) {
+  function nextActiveIndex() {
+    for (let i = 0; i < CFG.spots.length; i++) {
+      if (!progress.visited.includes(CFG.spots[i].id)) return i;
+    }
+    return CFG.spots.length;
+  }
+
+  function spotState(index) {
+    if (progress.visited.includes(CFG.spots[index].id)) return 'visited';
+    if (index === nextActiveIndex()) return 'active';
+    return 'locked';
+  }
+
+  function spotIcon(index, state) {
     return L.divIcon({
       className: 'spot-icon',
-      html: `<div class="spot${visited ? ' visited' : ''}">${visited ? '✓' : index + 1}</div>`,
+      html: `<div class="spot ${state}">${state === 'visited' ? '✓' : index + 1}</div>`,
       iconSize: [36, 36],
       iconAnchor: [18, 18],
       popupAnchor: [0, -20],
     });
   }
 
-  function spotPopup(spot) {
-    const visited = progress.visited.includes(spot.id);
+  function spotPopup(spot, index) {
+    const state = spotState(index);
     let html = `<b>${spot.name}</b><br>`;
-    html += visited ? 'Odwiedzony ✓' : 'Jeszcze nieodwiedzony';
-    if (playerPos) html += `<br>Odległość: ${formatDistance(distance(playerPos, spot))}`;
+    if (state === 'visited') {
+      html += 'Odwiedzony ✓';
+    } else if (state === 'active') {
+      html += 'Aktywny cel!';
+      if (playerPos) html += `<br>Odległość: ${formatDistance(distance(playerPos, spot))}`;
+    } else {
+      html += 'Zablokowany – odwiedź wcześniejsze punkty najpierw';
+    }
     return html;
   }
 
   CFG.spots.forEach((spot, i) => {
     const m = L.marker([spot.lat, spot.lng], {
-      icon: spotIcon(i, progress.visited.includes(spot.id)),
+      icon: spotIcon(i, spotState(i)),
     }).addTo(map);
-    m.bindPopup(() => spotPopup(spot));
+    m.bindPopup(() => spotPopup(spot, i));
     spotMarkers[spot.id] = { marker: m, index: i };
   });
 
   function refreshSpots() {
     CFG.spots.forEach((spot) => {
       const { marker, index } = spotMarkers[spot.id];
-      marker.setIcon(spotIcon(index, progress.visited.includes(spot.id)));
+      marker.setIcon(spotIcon(index, spotState(index)));
     });
-    $('progress').textContent = `${progress.visited.length}/${CFG.spots.length}`;
+    $('progress').textContent = `${progress.visited.length}/${CFG.spots.length}${devModeActive ? ' 🛠' : ''}`;
     updateArButton();
   }
 
@@ -118,9 +139,12 @@
   let arModule = null;
   let arActive = false;
 
-  // Pierwszy odwiedzony punkt z obiektami AR
+  // Ostatnio odwiedzony punkt z obiektami AR
   function unlockedArSpot() {
-    return CFG.spots.find((s) => s.ar && progress.visited.includes(s.id)) || null;
+    for (let i = CFG.spots.length - 1; i >= 0; i--) {
+      if (CFG.spots[i].ar && progress.visited.includes(CFG.spots[i].id)) return CFG.spots[i];
+    }
+    return null;
   }
 
   function updateArButton() {
@@ -157,22 +181,24 @@
 
   function checkSpots(pos, accuracy) {
     if (accuracy > MAX_ACCURACY_FOR_REACH) return;
-    CFG.spots.forEach((spot) => {
-      if (progress.visited.includes(spot.id)) return;
-      const radius = spot.radius || CFG.reachRadius;
-      if (distance(pos, spot) <= radius) {
-        progress.visited.push(spot.id);
-        saveProgress();
-        refreshSpots();
-        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        if (progress.visited.length === CFG.spots.length) {
-          toast('Brawo! Wszystkie punkty odwiedzone!', 6000);
-        } else {
-          toast(`Odwiedzono: ${spot.name} (${progress.visited.length}/${CFG.spots.length})`);
-        }
-        if (spot.ar) setTimeout(() => toast('Odblokowano kamerę! 📷', 4000), 3500);
+    const activeIdx = nextActiveIndex();
+    if (activeIdx >= CFG.spots.length) return;
+
+    const spot = CFG.spots[activeIdx];
+    const radius = spot.radius || CFG.reachRadius;
+    if (distance(pos, spot) <= radius) {
+      progress.visited.push(spot.id);
+      saveProgress();
+      refreshSpots();
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      if (progress.visited.length === CFG.spots.length) {
+        toast('Dotarłeś do wiaduktu! Otwórz kamerę i spójrz na wiadukt!', 8000);
+      } else {
+        const nextIdx = nextActiveIndex();
+        toast(`Punkt ${activeIdx + 1} zaliczony: ${spot.name}! Idź do: ${CFG.spots[nextIdx].name}`, 5000);
       }
-    });
+      if (spot.ar) setTimeout(() => toast('Odblokowano kamerę! 📷', 4000), 3500);
+    }
   }
 
   // ---------- Ludzik gracza ----------
@@ -409,4 +435,52 @@
 
   setFollow(true);
   refreshSpots();
+
+  // ---------- Tryb developerski (ukryty) ----------
+  // Aktywacja: 7 stuknięć w licznik postępu w ciągu 3 s, lub ?devmode w URL
+
+  function activateDev() {
+    if (devModeActive) return;
+    devModeActive = true;
+    $('btnDevSkip').classList.remove('hidden');
+    refreshSpots();
+    toast('Tryb dev aktywny 🛠', 3000);
+  }
+
+  let devTapCount = 0;
+  let devTapTimer = null;
+
+  $('progress').addEventListener('click', () => {
+    devTapCount++;
+    clearTimeout(devTapTimer);
+    devTapTimer = setTimeout(() => { devTapCount = 0; }, 3000);
+    if (devTapCount >= 7) {
+      devTapCount = 0;
+      activateDev();
+    }
+  });
+
+  $('btnDevSkip').addEventListener('click', () => {
+    const activeIdx = nextActiveIndex();
+    if (activeIdx >= CFG.spots.length) {
+      toast('Wszystkie punkty już zaliczone', 2000);
+      $('menu').classList.add('hidden');
+      return;
+    }
+    const spot = CFG.spots[activeIdx];
+    progress.visited.push(spot.id);
+    saveProgress();
+    refreshSpots();
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    if (progress.visited.length === CFG.spots.length) {
+      toast('[DEV] Wszystkie punkty zaliczone! Otwórz kamerę 📷', 8000);
+    } else {
+      const nextIdx = nextActiveIndex();
+      toast(`[DEV] ${spot.name} → ${CFG.spots[nextIdx].name}`, 4000);
+    }
+    if (spot.ar) setTimeout(() => toast('Odblokowano kamerę! 📷', 4000), 3500);
+    $('menu').classList.add('hidden');
+  });
+
+  if (DEV_URL) activateDev();
 })();

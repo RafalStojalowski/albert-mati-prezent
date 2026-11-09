@@ -1,32 +1,70 @@
 // Konfiguracja gry – tutaj podmieniasz punkty, promień zaliczenia itp.
 window.GAME_CONFIG = {
-  // Klucz w localStorage – zmień, jeśli chcesz wyzerować postęp wszystkim graczom
-  storageKey: 'zaspa-gra-v1',
+  // Klucz w localStorage – zmień, aby wyzerować postęp wszystkim graczom
+  storageKey: 'zaspa-gra-v2',
 
-  // Środek mapy na starcie (Gdańsk Zaspa)
-  mapCenter: [54.3917, 18.6045],
-  mapZoom: 16,
+  // Środek mapy na starcie
+  mapCenter: [54.3940, 18.6010],
+  mapZoom: 14,
 
   // Z jakiej odległości (w metrach) punkt uznajemy za odwiedzony
-  reachRadius: 25,
+  reachRadius: 30,
 
+  // Punkty są sekwencyjne – każdy odblokowany dopiero po zaliczeniu poprzedniego.
   spots: [
     {
-      id: 'p1',
-      name: 'Punkt 1',
-      lat: 54.393750,   // 54°23'37.5"N
-      lng: 18.610361,   // 18°36'37.3"E
-
-      // Po odwiedzeniu punktu odblokowuje się kamera z obiektami AR
+      id: 'brzezno-plaza',
+      name: 'Plaża Brzeźno',
+      lat: 54.4030,
+      lng: 18.5942,
+      radius: 50, // większy promień – obszar plaży
+    },
+    {
+      id: 'zaspa-1',
+      name: 'Zaspa – Wejście',
+      lat: 54.3972,
+      lng: 18.6020,
+    },
+    {
+      id: 'zaspa-2',
+      name: 'Zaspa – Murale',
+      lat: 54.3948,
+      lng: 18.6052,
+    },
+    {
+      id: 'zaspa-3',
+      name: 'Zaspa – Rynek',
+      lat: 54.3918,
+      lng: 18.6068,
+    },
+    {
+      id: 'zaspa-4',
+      name: 'Zaspa – Boisko',
+      lat: 54.3895,
+      lng: 18.6052,
+    },
+    {
+      id: 'zaspa-5',
+      name: 'Zaspa – Skwer',
+      lat: 54.3870,
+      lng: 18.6055,
+    },
+    {
+      id: 'wiadukt',
+      name: 'Wiadukt',
+      lat: 54.3845,
+      lng: 18.6058,
+      // Widok AR z zachowanym obrazem wiaduktu.
+      // Zastąp src/rataj.jpg swoim zdjęciem wiaduktu i dostosuj współrzędne targetu.
       ar: {
         targets: [
           {
-            name: 'Boisko',
-            lat: 54.393667,   // 54°23'37.2"N
-            lng: 18.609222,   // 18°36'33.2"E
-            image: 'src/przemo.jpg',
-            width: 14,        // szerokość zdjęcia w metrach (wysokość wg proporcji)
-            elevation: 4,     // dolna krawędź zdjęcia nad ziemią, w metrach
+            name: 'Wiadukt Zaspa',
+            lat: 54.3835,
+            lng: 18.6060,
+            image: 'src/rataj.jpg',
+            width: 50,
+            elevation: 4,
           },
         ],
       },
