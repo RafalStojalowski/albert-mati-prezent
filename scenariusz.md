@@ -1,9 +1,15 @@
-3) mieszkanie u radziuna pod blokiem, zaspowoz, trzeba podejsc o 500 metrow zeby wychwycilo, zdjecie z przemem opierajacym sie o zaspowoz - minigierka wyscigowa na kamerce zaspowoz jest na dole i wymija przeszkody jak sie uda to przemo mowi ze teraz trzeba pograc w pileczke
+1) punkt na mapie odpowiadajacy plazy na brzeznie to: 54°24'43.7"N 18°37'44.0"E, error: nie wyswietla sie punkt w ktory trzeba trafic kamera
 
-4) pzu - przemo stoi na pzu i jest nagranie gdzie mowi ze wita serdecznie kolegow i ze jednak zaprasza na partyjke w siatkotenisa
+2) punkt na mapie petli tramwajowej to: 54°23'59.3"N 18°35'42.2"E, punkt stojacego przema to: 54°23'58.7"N 18°35'43.0"E
 
-5) kort tenisowy pod domem mamy alberta - przemo stoi na korcie i trzeba w niego wejsc, wtedy jest minigierka w tenisa i po wygranej pojawia sie przemo i mowi ze zaprasza na wysuszone boisko
+3) mieszkanie u radziuna pod blokiem, punkt na mapie: 54°23'43.7"N 18°36'39.5"E, trzeba podejsc o 500 metrow zeby wychwycilo, zdjecie z przemem opierajacym sie o zaspowoz, po chwili przemo znika i kamera sie wylacza, docelowo chcialbym miec taka funkcjonalnoasc, ze wgram zdjecie zwykle, oraz to samo zdjecie gdzie bedzie przemo, chcialbym zeby na telefonie wykrywalo gdzie powinien byc umieszczony sam przemo, po zamknieciu kamery wlacza sie minigierka wyscigowa na kamerce zaspowoz jest na dole i wymija przeszkody jak sie w nia wygra to na ekranie pojawi sie nagranie z przemem gdzie mowi ze teraz trzeba pograc w pileczke
 
-6) Sachara - nagranie z przemem ktory sie kreci i po chwili mowi ze bardzo dobra robota, po takiej dlugiej podrozy nalezy sie w koncu nagroda. Zapraszam do serca zaspy
+4) pzu, punkt na mapie: 54°23'36.4"N 18°36'33.0"E,- przemo stoi na pzu 54°23'37.3"N 18°36'33.4"E i jest nagranie gdzie mowi ze wita serdecznie kolegow i ze jednak zaprasza na partyjke w siatkotenisa
 
-7) Wiadukt - zdjecie wiaduktu ktore bedzie zawsze dostepne nawet jak go juz nie bedzie w rzeczywistosci to bedziecie mogli zawsze podejsc z telefonem i go zobaczyc
+5) kort tenisowy pod domem mamy alberta, punkt na mapie: 54°23'20.4"N 18°35'57.9"E - przemo stoi na korcie i trzeba w niego wejsc czyli w punkt: 54°23'20.2"N 18°35'57.0"E, wtedy jest minigierka w tenisa i po wygranej pojawia sie nagranie z przemem, gdzie mowi ze zaprasza na wysuszone boisko
+
+6) Sachara, punkt na mapie: 54°23'39.2"N 18°35'37.9"E - wlacza sie kamerka gdzie jest nagranie umiejscowione na punkcie 54°23'39.8"N 18°35'39.2"E, to nagranie bedzie zapetlone nagranie z przemem ktory sie kreci i bedzie napisane na ekranie: "Tutaj możesz odpoczac przy krecacym sie Przemie" i to nagranie bedzie musialo byc osadzone na punkcie wiec bedzie mozna do niego podchodzic i obchodzic go dookola, ale bedzie tez przycisk juz odpoczalem  i wtedy tamto zapetlone nagranie przechodziw w nagranie, gdzie mowi ze bardzo dobra robota, po takiej dlugiej podrozy nalezy sie w koncu nagroda. Zapraszam do serca zaspy
+
+7) Wiadukt, punkt na mapie: 54°23'40.3"N 18°35'59.5"E, po wejsciu na punkt bedzie informacja ze gratulacje, to koniec zaspianskiego spaceru, o to twoja nagroda, i bedzie przycisk do otworzenia kamery i w tym punkcie 54°23'40.6"N 18°36'06.4"E bedzie zdjecie wiaduktu , po chwili bedzie napisane ze wszystkiego najlepszego z okazji urodzin, oraz "To jest specjalna pamiatka, do ktorej zawsze mozecie wracac", "Bedziecie mogli zobaczyc wiadukt nawego gdy go juz nie bedzie z nami", ":("
+
+Globalne uwagi: nie moze byc tytulow punktow na mapie bo to beda juz podpowiedzi, wszystkie punkty musza sie ujawniac na mapie dopiero jak gracz bedzie w okolicy 500 metrow od niego w promieniu, pierwszy punkt czyli plaza na brzeznie musi byc widoczny od razu bez logiki zblizania sie do 500 metrow.
