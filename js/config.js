@@ -46,7 +46,6 @@ window.GAME_CONFIG = {
       scene: {
         type: 'radziun',
         target: { lat: 54.3955, lng: 18.6110 },
-        enterRadius: 8,
       },
     },
     // 4) PZU

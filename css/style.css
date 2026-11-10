@@ -470,6 +470,24 @@ html, body {
   touch-action: none;
 }
 
+/* ---------- Scena Radziun – zdjęcie na kamerce ---------- */
+.radziun-photo {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.radziun-photo img {
+  max-width: 80%;
+  max-height: 65%;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  object-fit: contain;
+}
+
 /* Przycisk "Wejdź" w scenie zaspa1 */
 .ar-btn-enter {
   min-width: 120px;
