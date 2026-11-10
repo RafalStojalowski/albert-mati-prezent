@@ -208,6 +208,12 @@
           enterRadius: spot.scene.enterRadius || 6,
           overlay: $('arOverlay'), onEnd, devMode: devModeActive,
         });
+      } else if (spot.scene && spot.scene.type === 'sahara') {
+        const mod = await import(new URL('js/scene-sahara.js', document.baseURI).href);
+        await mod.startSaharaScene({
+          origin, sceneTarget: spot.scene.target,
+          overlay: $('arOverlay'), onEnd, devMode: devModeActive,
+        });
       } else if (spot.ar) {
         if (!arModule) arModule = import(AR_MODULE_URL);
         const mod = await arModule;

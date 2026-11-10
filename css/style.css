@@ -524,3 +524,33 @@ html, body {
   font-size: 16px;
   font-weight: 700;
 }
+
+/* ---------- Scena Sahara – kręcący się Przemo ---------- */
+.sahara-spin img {
+  animation: sahara-rotate 2.5s linear infinite;
+}
+@keyframes sahara-rotate {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
+}
+
+.sahara-rest-btn {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2600;
+  padding: 16px 32px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+  animation: sahara-btn-pulse 1.8s ease-in-out infinite;
+}
+@keyframes sahara-btn-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(47, 168, 138, 0.7), var(--shadow); }
+  50%      { box-shadow: 0 0 0 14px rgba(47, 168, 138, 0), var(--shadow); }
+}
