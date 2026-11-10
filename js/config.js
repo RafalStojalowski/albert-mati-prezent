@@ -26,9 +26,16 @@ window.GAME_CONFIG = {
     },
     {
       id: 'zaspa-1',
-      name: 'Zaspa – Wejście',
-      lat: 54.3972,
-      lng: 18.6020,
+      name: 'Pętla tramwajowa',
+      lat: 54.3960,
+      lng: 18.6018,
+      hidden: true,       // znacznik niewidoczny dopóki gracz nie jest blisko
+      revealRadius: 500,  // metry – pokaż znacznik + toast
+      scene: {
+        type: 'zaspa1',
+        target: { lat: 54.3960, lng: 18.6018 }, // GPS gdzie stoi AR-owe zdjęcie
+        enterRadius: 6,  // metry – wejście w zdjęcie odpala minigrę
+      },
     },
     {
       id: 'zaspa-2',

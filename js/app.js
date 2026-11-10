@@ -33,8 +33,9 @@
   }
 
   const progress = loadProgress();
-  // Usuń z zapisu punkty, których już nie ma w konfiguracji
-  progress.visited = progress.visited.filter((id) => CFG.spots.some((s) => s.id === id));
+  progress.visited  = progress.visited.filter((id) => CFG.spots.some((s) => s.id === id));
+  if (!progress.revealed) progress.revealed = [];
+  progress.revealed = progress.revealed.filter((id) => CFG.spots.some((s) => s.id === id));
 
   // ---------- Pomocnicze ----------
   function distance(a, b) {
@@ -125,10 +126,16 @@
     spotMarkers[spot.id] = { marker: m, index: i };
   });
 
+  const INVISIBLE_ICON = L.divIcon({ className: '', html: '', iconSize: [0, 0], iconAnchor: [0, 0] });
+
+  function isHiddenSpot(spot) {
+    return spot.hidden && !progress.revealed.includes(spot.id);
+  }
+
   function refreshSpots() {
     CFG.spots.forEach((spot) => {
       const { marker, index } = spotMarkers[spot.id];
-      marker.setIcon(spotIcon(index, spotState(index)));
+      marker.setIcon(isHiddenSpot(spot) ? INVISIBLE_ICON : spotIcon(index, spotState(index)));
     });
     $('progress').textContent = `${progress.visited.length}/${CFG.spots.length}${devModeActive ? ' 🛠' : ''}`;
     updateArButton();
@@ -166,14 +173,17 @@
     const onEnd = () => { arActive = false; updateArButton(); };
     try {
       if (spot.scene && spot.scene.type === 'brzezno') {
-        const SCENE_URL = new URL('js/scene-brzezno.js', document.baseURI).href;
-        const mod = await import(SCENE_URL);
+        const mod = await import(new URL('js/scene-brzezno.js', document.baseURI).href);
         await mod.startBrzeznoScene({
-          origin,
-          sceneTarget: spot.scene.target,
-          overlay: $('arOverlay'),
-          onEnd,
-          devMode: devModeActive,
+          origin, sceneTarget: spot.scene.target,
+          overlay: $('arOverlay'), onEnd, devMode: devModeActive,
+        });
+      } else if (spot.scene && spot.scene.type === 'zaspa1') {
+        const mod = await import(new URL('js/scene-zaspa1.js', document.baseURI).href);
+        await mod.startZaspa1Scene({
+          origin, sceneTarget: spot.scene.target,
+          enterRadius: spot.scene.enterRadius || 6,
+          overlay: $('arOverlay'), onEnd, devMode: devModeActive,
         });
       } else if (spot.ar) {
         if (!arModule) arModule = import(AR_MODULE_URL);
@@ -199,6 +209,18 @@
     if (activeIdx >= CFG.spots.length) return;
 
     const spot = CFG.spots[activeIdx];
+
+    // Ujawnij ukryty punkt gdy gracz jest wystarczająco blisko
+    if (spot.hidden && !progress.revealed.includes(spot.id)) {
+      if (distance(pos, spot) <= (spot.revealRadius || 500)) {
+        progress.revealed.push(spot.id);
+        saveProgress();
+        refreshSpots();
+        toast('Jesteś blisko! Coś czeka na ciebie w pobliżu…', 5000);
+      }
+      return;
+    }
+
     const radius = spot.radius || CFG.reachRadius;
     if (distance(pos, spot) <= radius) {
       progress.visited.push(spot.id);
@@ -209,9 +231,10 @@
         toast('Dotarłeś do wiaduktu! Otwórz kamerę i spójrz na wiadukt!', 8000);
       } else {
         const nextIdx = nextActiveIndex();
-        toast(`Punkt ${activeIdx + 1} zaliczony: ${spot.name}! Idź do: ${CFG.spots[nextIdx].name}`, 5000);
+        const nextSpot = CFG.spots[nextIdx];
+        toast(`Punkt ${activeIdx + 1} zaliczony: ${spot.name}! Idź do: ${nextSpot.hidden ? '???' : nextSpot.name}`, 5000);
       }
-      if (spot.ar) setTimeout(() => toast('Odblokowano kamerę! 📷', 4000), 3500);
+      if (spot.ar || spot.scene) setTimeout(() => toast('Odblokowano kamerę! 📷', 4000), 3500);
     }
   }
 
