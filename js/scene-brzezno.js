@@ -49,7 +49,7 @@ const INTRO_TEXTS = [
 
 const SPEECH =
   'gdy już skończy się impreza, musicie pójść na granicę Zaspy i Przymorza, ' +
-  'gdzie podłużny poroznik kończy i zaczyna swój bieg';
+  'gdzie podłużny podróżnik kończy i zaczyna swój bieg';
 
 // ---------- Główna funkcja ----------
 
@@ -170,7 +170,7 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
       overlay.style.pointerEvents = 'auto';
       overlay.addEventListener('click', onTap, { once: true });
     }
-  }, 5000);
+  }, 3000);
 
   // 4. Trigger sekwencji
   const targetBearing = bearingTo(origin, sceneTarget);
@@ -249,22 +249,17 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
     seq.style.opacity = '1';
     overlay.appendChild(seq);
 
-    // --- Przemo wyłania się z wody (1. pojawienie) ---
+    // --- Przemo wyłania się z wody (powoli, zostaje) ---
     const przemoWrap = document.createElement('div');
     przemoWrap.className = 'przemo-wrap';
     przemoWrap.innerHTML = '<img src="src/przemo.jpg" class="przemo-img" alt="Przemo">';
     seq.appendChild(przemoWrap);
 
-    await sleep(80);
+    await sleep(300);
     przemoWrap.classList.add('risen');
-    await sleep(2200);
-    await sleep(600);
+    await sleep(3500);
 
-    // Przemo odpływa
-    przemoWrap.classList.remove('risen');
-    await sleep(2200);
-
-    // --- Sekwencja tekstów ---
+    // --- Sekwencja tekstów (Przemo cały czas widoczny) ---
     const textEl = document.createElement('div');
     textEl.className     = 'brzezno-text';
     textEl.style.opacity = '0';
@@ -273,28 +268,32 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
     for (const msg of INTRO_TEXTS) {
       textEl.textContent = msg;
       await fadeTo(textEl, 1, 700);
-      await sleep(1800);
+      await sleep(2200);
       await fadeTo(textEl, 0, 700);
       await sleep(400);
     }
 
-    // --- Przemo wraca (2. pojawienie) ---
-    przemoWrap.style.opacity = '1';
-    await sleep(80);
-    przemoWrap.classList.add('risen');
-    await sleep(1800);
+    await sleep(600);
 
-    // Dymek z tekstem Przema
+    // --- Dymek z mową Przema + przycisk zamknij ---
     const speechEl = document.createElement('div');
     speechEl.className     = 'przemo-speech';
-    speechEl.textContent   = SPEECH;
     speechEl.style.opacity = '0';
+    speechEl.innerHTML =
+      '<p>' + SPEECH + '</p>' +
+      '<button class="przemo-speech-close">OK, rozumiem!</button>';
     seq.appendChild(speechEl);
 
     await fadeTo(speechEl, 1, 800);
-    await sleep(5500);
 
-    // Przemo znika razem z dymkiem
+    // Czekaj na kliknięcie przycisku
+    await new Promise(res => {
+      const btn = speechEl.querySelector('.przemo-speech-close');
+      btn.addEventListener('click', res, { once: true });
+      btn.addEventListener('touchstart', (e) => { e.preventDefault(); res(); }, { once: true });
+    });
+
+    // Przemo i dymek znikają
     await Promise.all([
       fadeTo(speechEl,  0,  800),
       fadeTo(przemoWrap, 0, 1400),
