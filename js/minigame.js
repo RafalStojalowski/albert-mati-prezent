@@ -2,7 +2,7 @@
 
 const TOWER_RANGE     = 160;
 const TOWER_LIFETIME  = 8000;
-const TOWER_COOLDOWN  = 4000;
+const TOWER_COOLDOWN  = 3000;
 const TOWER_FIRE_RATE = 800;
 const PROJ_SPEED      = 8;
 const PRZEMO_HP_MAX   = 5;

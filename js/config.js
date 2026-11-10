@@ -76,13 +76,14 @@ window.GAME_CONFIG = {
     // 6) Sahara
     {
       id: 'zaspa-sahara',
-      lat: 54.3942,
-      lng: 18.5939,
+      lat: 54.39422,
+      lng: 18.59386,
       hidden: true,
       revealRadius: 500,
       scene: {
         type: 'sahara',
-        target: { lat: 54.3944, lng: 18.5942 },
+        // Kierunek, w który gracz ma skierować kamerę (tam kręci się Przemo)
+        target: { lat: 54.39439, lng: 18.59422 },
       },
     },
     // 7) Wiadukt – finał
