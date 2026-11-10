@@ -368,6 +368,20 @@ html, body {
   pointer-events: none;
 }
 
+/* Strzałka kierunku celu */
+.aim-arrow {
+  position: absolute;
+  left: 50%;
+  top: 35%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  color: var(--accent);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.2s;
+}
+
 /* ---------- Scena Brzeźno ---------- */
 .brzezno-seq {
   position: absolute;

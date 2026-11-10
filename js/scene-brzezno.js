@@ -80,12 +80,12 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
   const hintEl   = overlay.querySelector('.ar-hint');
   const xhair    = overlay.querySelector('.ar-crosshair');
   const bottomEl = overlay.querySelector('.ar-bottom');
-  const ORIG_BOTTOM = bottomEl.innerHTML; // przywrócimy po zakończeniu
+  const ORIG_BOTTOM = bottomEl.innerHTML;
 
   labelEl.textContent = 'Wyceluj w punkt nad morzem';
   hintEl.textContent  = devMode
     ? '[DEV] Dotknij ekran, aby uruchomić sekwencję'
-    : 'Trzymaj celownik nieruchomo przez 3 sekundy';
+    : 'Obróć telefon w stronę strzałki';
   bottomEl.innerHTML  = '<button class="ar-close" aria-label="Zamknij">✕</button>';
   overlay.classList.remove('hidden');
 
@@ -94,17 +94,25 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
   countEl.className = 'aim-count';
   xhair.appendChild(countEl);
 
+  // Strzałka kierunku
+  const arrowEl = document.createElement('div');
+  arrowEl.className = 'aim-arrow';
+  arrowEl.textContent = '▲';
+  xhair.parentElement.appendChild(arrowEl);
+
   let running   = true;
   let triggered = false;
 
   function cleanup() {
     if (!running) return;
     running = false;
-    window.removeEventListener(orientEvt, onOrient);
+    window.removeEventListener(orientEvtAbs,  onOrientAbs);
+    window.removeEventListener('deviceorientation', onOrientRel);
     clearTimeout(compassFallbackTimer);
     stream.getTracks().forEach(t => t.stop());
     video.remove();
     countEl.remove();
+    arrowEl.remove();
     xhair.classList.remove('aim-ready');
     xhair.style.opacity    = '';
     topEl.style.opacity    = '';
@@ -119,25 +127,35 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
 
   bottomEl.querySelector('.ar-close').addEventListener('click', cleanup);
 
-  // 3. Kompas
+  // 3. Kompas – próbuj absolute, potem relative
   let heading = null;
-  const orientEvt = 'ondeviceorientationabsolute' in window
-    ? 'deviceorientationabsolute'
-    : 'deviceorientation';
+  let gotAbsolute = false;
 
-  function onOrient(e) {
+  const orientEvtAbs = 'ondeviceorientationabsolute' in window
+    ? 'deviceorientationabsolute' : null;
+
+  function onOrientAbs(e) {
     if (e.alpha == null) return;
-    if (orientEvt === 'deviceorientation' && !e.absolute) return;
+    heading = compassHeading(e.alpha, e.beta, e.gamma);
+    gotAbsolute = true;
+  }
+
+  function onOrientRel(e) {
+    if (e.alpha == null || gotAbsolute) return;
+    // Użyj nawet nieabsolutnych odczytów – na większości urządzeń
+    // alpha i tak bazuje na kompasie
     heading = compassHeading(e.alpha, e.beta, e.gamma);
   }
-  window.addEventListener(orientEvt, onOrient);
+
+  if (orientEvtAbs) window.addEventListener(orientEvtAbs, onOrientAbs);
+  window.addEventListener('deviceorientation', onOrientRel);
 
   // iOS 13+: zapytaj o pozwolenie na czujniki
   if (typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function') {
     try {
       if ((await DeviceOrientationEvent.requestPermission()) !== 'granted') {
-        hintEl.textContent = 'Brak dostępu do kompasu – dotknij ekranu, aby uruchomić';
+        hintEl.textContent = 'Brak dostępu do kompasu – dotknij ekranu';
         devMode = true;
       }
     } catch (_) { /* ignoruj */ }
@@ -147,6 +165,7 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
   const compassFallbackTimer = setTimeout(() => {
     if (heading === null && running && !triggered) {
       hintEl.textContent = 'Brak kompasu – dotknij ekranu, aby uruchomić';
+      arrowEl.style.display = 'none';
       overlay.addEventListener('click', onTap, { once: true });
     }
   }, 5000);
@@ -159,9 +178,11 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
     if (triggered || !running) return;
     triggered = true;
     clearTimeout(compassFallbackTimer);
-    window.removeEventListener(orientEvt, onOrient);
+    window.removeEventListener(orientEvtAbs, onOrientAbs);
+    window.removeEventListener('deviceorientation', onOrientRel);
     overlay.removeEventListener('click', onTap);
-    bottomEl.style.pointerEvents = 'none'; // zablokuj zamknięcie podczas sekwencji
+    arrowEl.style.display = 'none';
+    bottomEl.style.pointerEvents = 'none';
     playSequence().then(cleanup).catch(err => {
       console.error('Błąd sekwencji:', err);
       cleanup();
@@ -174,23 +195,36 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
     overlay.addEventListener('click', onTap, { once: true });
   }
 
-  // 5. Pętla celowania
+  // 5. Pętla celowania ze strzałką kierunkową
   function aimLoop() {
     if (!running || triggered) return;
     if (heading !== null) {
-      const diff  = Math.abs(angDiff(heading, targetBearing));
-      const aimed = diff <= AIM_TOL;
+      const diff  = angDiff(heading, targetBearing);
+      const absDiff = Math.abs(diff);
+      const aimed = absDiff <= AIM_TOL;
+
+      // Strzałka wskazuje kierunek celu
+      if (absDiff > AIM_TOL) {
+        arrowEl.style.display = '';
+        arrowEl.style.transform = `translate(-50%, -50%) rotate(${diff}deg)`;
+        arrowEl.style.opacity = Math.min(1, absDiff / 30).toFixed(2);
+      } else {
+        arrowEl.style.display = 'none';
+      }
+
       if (aimed) {
         if (!aimStart) aimStart = Date.now();
         const elapsed   = Date.now() - aimStart;
         const remaining = Math.ceil((HOLD_MS - elapsed) / 1000);
         xhair.classList.add('aim-ready');
         countEl.textContent = remaining > 0 ? String(remaining) : '';
+        hintEl.textContent = 'Trzymaj nieruchomo…';
         if (elapsed >= HOLD_MS) { triggerSequence(); return; }
       } else {
         aimStart = null;
         xhair.classList.remove('aim-ready');
         countEl.textContent = '';
+        hintEl.textContent = diff > 0 ? 'Obróć w prawo →' : '← Obróć w lewo';
       }
     }
     requestAnimationFrame(aimLoop);
@@ -199,7 +233,6 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
 
   // 6. Sekwencja narracyjna
   async function playSequence() {
-    // Schowaj UI celowania
     await Promise.all([
       fadeTo(topEl,    0, 300),
       fadeTo(bottomEl, 0, 300),
@@ -217,14 +250,14 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
     przemoWrap.innerHTML = '<img src="src/przemo.jpg" class="przemo-img" alt="Przemo">';
     seq.appendChild(przemoWrap);
 
-    await sleep(80);                     // tick – CSS transition zaczyna działać
+    await sleep(80);
     przemoWrap.classList.add('risen');
-    await sleep(2200);                   // czekaj na wynurzenie
-    await sleep(600);                    // chwila zawieszenia
+    await sleep(2200);
+    await sleep(600);
 
     // Przemo odpływa
     przemoWrap.classList.remove('risen');
-    await sleep(2200);                   // czekaj na zanurzenie
+    await sleep(2200);
 
     // --- Sekwencja tekstów ---
     const textEl = document.createElement('div');
