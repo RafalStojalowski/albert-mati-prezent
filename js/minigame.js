@@ -43,6 +43,25 @@ const WAVE_NAMES = ['Fala 1: Północ', 'Fala 2: Flanki', 'Fala 3: Oblężenie',
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// Twarz Przema (rysowana w kółku)
+let faceImg = null;
+const _face = new Image();
+_face.onload = () => { faceImg = _face; };
+_face.src = 'src/twarz-przemo.png';
+
+function drawFace(ctx, x, y, r) {
+  if (!faceImg) return false;
+  const iw = faceImg.width, ih = faceImg.height;
+  const s  = Math.min(iw, ih);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.drawImage(faceImg, (iw - s) / 2, (ih - s) / 2, s, s, x - r, y - r, r * 2, r * 2);
+  ctx.restore();
+  return true;
+}
+
 export async function startMiniGame() {
   while (true) {
     const result = await playOnce();
@@ -500,7 +519,16 @@ function playOnce() {
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // Przemo figure (stick)
+      if (drawFace(ctx, x, y, PRZEMO_RADIUS - 2)) {
+        ctx.beginPath();
+        ctx.arc(x, y, PRZEMO_RADIUS, 0, Math.PI * 2);
+        ctx.strokeStyle = '#2fa88a';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        return;
+      }
+
+      // Przemo figure (stick) – zapas, gdy zdjęcie się nie wczytało
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 2.5;
       ctx.lineCap = 'round';
@@ -677,6 +705,7 @@ function drawPrzemoIconWin(ctx, x, y, r) {
   ctx.strokeStyle = '#2fa88a';
   ctx.lineWidth = 3;
   ctx.stroke();
+  if (drawFace(ctx, x, y, r - 2)) return;
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 12px system-ui';
   ctx.textAlign = 'center';

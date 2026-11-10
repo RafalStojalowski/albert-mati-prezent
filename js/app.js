@@ -186,7 +186,6 @@
         const mod = await import(new URL('js/scene-zaspa1.js', document.baseURI).href);
         await mod.startZaspa1Scene({
           origin, sceneTarget: spot.scene.target,
-          enterRadius: spot.scene.enterRadius || 6,
           overlay: $('arOverlay'), onEnd, devMode: devModeActive,
         });
       } else if (spot.scene && spot.scene.type === 'radziun') {

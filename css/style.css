@@ -371,15 +371,33 @@ html, body {
 /* Strzałka kierunku celu */
 .aim-arrow {
   position: absolute;
-  left: 50%;
-  top: 35%;
-  transform: translate(-50%, -50%);
-  font-size: 48px;
-  color: var(--accent);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  top: 50%;
+  width: 84px;
+  height: 52px;
+  margin-top: -26px;
+  color: #fff;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.9)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
   pointer-events: none;
   z-index: 5;
   transition: opacity 0.2s;
+}
+.aim-arrow svg { display: block; }
+.aim-arrow.right {
+  right: 12px;
+  animation: aim-nudge-right 0.9s ease-in-out infinite;
+}
+.aim-arrow.left {
+  left: 12px;
+  transform: scaleX(-1);
+  animation: aim-nudge-left 0.9s ease-in-out infinite;
+}
+@keyframes aim-nudge-right {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(10px); }
+}
+@keyframes aim-nudge-left {
+  0%, 100% { transform: scaleX(-1) translateX(0); }
+  50%      { transform: scaleX(-1) translateX(10px); }
 }
 
 /* ---------- Scena Brzeźno ---------- */
@@ -614,4 +632,40 @@ html, body {
 }
 .wiadukt-text-emoji {
   font-size: clamp(48px, 14vw, 80px);
+}
+
+/* ---------- Scena Pętla tramwajowa (zaspa1) ---------- */
+.zaspa1-przemo {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  width: min(240px, 55vw);
+  transform: translateX(-50%);
+  border-radius: 10px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 4;
+}
+.zaspa1-countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: clamp(64px, 24vw, 140px);
+  font-weight: 900;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+.zaspa1-countdown span {
+  animation: zaspa1-pop 0.9s ease-out forwards;
+}
+@keyframes zaspa1-pop {
+  0%   { transform: scale(1.8); opacity: 0; }
+  25%  { transform: scale(1);   opacity: 1; }
+  80%  { transform: scale(0.9); opacity: 1; }
+  100% { transform: scale(0.7); opacity: 0; }
 }

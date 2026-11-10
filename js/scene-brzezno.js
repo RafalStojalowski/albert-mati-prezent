@@ -1,6 +1,8 @@
 // Scena pierwszego punktu: Plaża Brzeźno
 // Celowanie kompasem w punkt nad morzem przez 3 s → Przemo wyłania się z wody.
 
+import { createAimArrow, turnHint } from './aim-arrow.js';
+
 const DEG = Math.PI / 180;
 const HOLD_MS  = 3000;  // ms trzymania celownika
 const AIM_TOL  = 25;    // stopnie tolerancji kompasowej
@@ -95,10 +97,8 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
   xhair.appendChild(countEl);
 
   // Strzałka kierunku
-  const arrowEl = document.createElement('div');
-  arrowEl.className = 'aim-arrow';
-  arrowEl.textContent = '▲';
-  xhair.parentElement.appendChild(arrowEl);
+  const arrow   = createAimArrow(xhair.parentElement);
+  const arrowEl = arrow.el;
 
   let running   = true;
   let triggered = false;
@@ -206,14 +206,8 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
       const absDiff = Math.abs(diff);
       const aimed = absDiff <= AIM_TOL;
 
-      // Strzałka wskazuje kierunek celu
-      if (absDiff > AIM_TOL) {
-        arrowEl.style.display = '';
-        arrowEl.style.transform = `translate(-50%, -50%) rotate(${diff}deg)`;
-        arrowEl.style.opacity = Math.min(1, absDiff / 30).toFixed(2);
-      } else {
-        arrowEl.style.display = 'none';
-      }
+      // Strzałka wskazuje, w którą stronę obrócić telefon
+      arrow.update(aimed ? null : diff);
 
       if (aimed) {
         if (!aimStart) aimStart = Date.now();
@@ -228,7 +222,7 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
         xhair.classList.remove('aim-ready');
         countEl.textContent = '';
         if (!devMode) {
-          hintEl.textContent = diff > 0 ? 'Obróć w prawo →' : '← Obróć w lewo';
+          hintEl.textContent = turnHint(diff);
         }
       }
     }

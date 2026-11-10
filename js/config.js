@@ -26,14 +26,14 @@ window.GAME_CONFIG = {
     // 2) Pętla tramwajowa
     {
       id: 'zaspa-1',
-      lat: 54.3998,
-      lng: 18.5951,
+      lat: 54.39981,
+      lng: 18.59506,
       hidden: true,
       revealRadius: 500,
       scene: {
         type: 'zaspa1',
-        target: { lat: 54.3996, lng: 18.5953 },
-        enterRadius: 6,
+        // Kierunek, w który gracz ma skierować kamerę (tam stoi Przemo)
+        target: { lat: 54.39964, lng: 18.59528 },
       },
     },
     // 3) Radziun – pod blokiem
