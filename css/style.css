@@ -523,77 +523,7 @@ html, body {
   touch-action: none;
 }
 
-/* ---------- Scena Radziun – zdjęcie na kamerce ---------- */
-.radziun-photo {
-  position: fixed;
-  inset: 0;
-  z-index: 3001;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.radziun-photo img {
-  max-width: 80%;
-  max-height: 65%;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
-  object-fit: contain;
-}
-
-/* ---------- Dymek mowy – placeholder nagrań wideo ---------- */
-.przemo-video-speech {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 3003;
-  width: 85%;
-  max-width: 380px;
-  padding: 18px 22px;
-  background: rgba(0, 0, 0, 0.82);
-  border-radius: 16px;
-  color: #fff;
-  text-align: center;
-  font-size: 17px;
-  line-height: 1.5;
-}
-.przemo-video-speech p { margin: 0 0 6px; }
-.przemo-video-speech .tap-hint {
-  margin-top: 14px;
-  font-size: 13px;
-  opacity: 0.55;
-}
-
-/* Przycisk "Wejdź" w scenie zaspa1 */
-.ar-btn-enter {
-  min-width: 120px;
-  height: 52px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 26px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-/* ---------- Scena Sahara – kręcący się Przemo ---------- */
-.sahara-video {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: min(300px, 70vw);
-  max-height: 55vh;
-  transform: translate(-50%, -50%);
-  border-radius: 12px;
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6);
-  object-fit: contain;
-  background: #000;
-  pointer-events: none;
-  z-index: 4;
-}
-
+/* ---------- Scena Sahara – przycisk odpoczynku ---------- */
 .sahara-rest-btn {
   position: fixed;
   bottom: 100px;
@@ -709,20 +639,45 @@ html, body {
 }
 .vm-layer.no-camera { background: #000; }
 .vm-layer button { pointer-events: auto; }
-.vm-video {
+.vm-media {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: min(300px, 70vw);
+  max-width: min(300px, 70vw);
   max-height: 60vh;
+  width: auto;
+  height: auto;
   transform: translate(-50%, -50%);
   border-radius: 12px;
   border: 3px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6);
   background: #000;
   object-fit: contain;
+  pointer-events: none;
   transition: opacity 0.5s ease;
   z-index: 4;
+}
+.vm-media.vm-wide {
+  max-width: none;
+  width: min(720px, 130vw);
+  max-height: none;
+}
+.vm-caption {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 110px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  text-align: center;
+  font-size: clamp(17px, 4.8vw, 24px);
+  font-weight: 700;
+  line-height: 1.35;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  z-index: 6;
 }
 .vm-hint {
   position: absolute;
@@ -789,16 +744,4 @@ html, body {
   font-weight: 700;
   white-space: nowrap;
   animation: sahara-btn-pulse 1.8s ease-in-out infinite;
-}
-.wiadukt-photo {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: min(720px, 130vw);
-  transform: translate(-50%, -50%);
-  border-radius: 10px;
-  border: 3px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6);
-  pointer-events: none;
-  z-index: 4;
 }

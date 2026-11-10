@@ -5,7 +5,8 @@ const PADDLE_H     = 14;
 const BALL_R       = 10;
 const BALL_SPEED   = 5;
 const BALL_ACCEL   = 0.3;
-const AI_SPEED     = 3.8;
+const AI_SPEED     = 2.4;   // prędkość Przema (px/klatkę)
+const AI_MISS      = 1.15;  // jak bardzo Przemo myli się w ocenie piłki (× szerokość paletki)
 const SERVE_DELAY  = 800;
 
 // Po wygranej odtwarzane jest nagranie Przema (scene-kort.js)
@@ -46,6 +47,7 @@ function playOnce() {
 
     let playerX = W / 2;
     let aiX     = W / 2;
+    let aiError = 0;   // błąd przewidywania Przema, losowany przy każdym odbiciu gracza
     let playerScore = 0;
     let aiScore     = 0;
     let ball = null;
@@ -111,6 +113,7 @@ function playOnce() {
             ball.y = playerPaddleY - BALL_R;
             const off = (ball.x - playerX) / (PADDLE_W / 2);
             ball.vx = off * spd * 0.8;
+            aiError = (Math.random() - 0.5) * PADDLE_W * AI_MISS;
           }
         }
 
@@ -137,9 +140,10 @@ function playOnce() {
       }
 
       // AI
-      const aiTarget = ball ? ball.x : W / 2;
+      // Przemo goni piłkę tylko gdy leci do niego (z błędem), inaczej wraca na środek
+      const aiTarget = ball && ball.vy < 0 ? ball.x + aiError : W / 2;
       const aiDiff = aiTarget - aiX;
-      const maxMove = AI_SPEED * (dt / 16) * (1 + 0.08 * aiScore);
+      const maxMove = AI_SPEED * (dt / 16);
       if (Math.abs(aiDiff) > 2) aiX += Math.sign(aiDiff) * Math.min(Math.abs(aiDiff), maxMove);
       aiX = Math.max(courtL + PADDLE_W / 2, Math.min(courtR - PADDLE_W / 2, aiX));
 

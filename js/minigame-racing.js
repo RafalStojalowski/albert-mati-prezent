@@ -111,32 +111,58 @@ function playOnce() {
       if (now - lastSpawn < interval) return;
       lastSpawn = now;
 
-      const carType = LUXURY_CARS[Math.floor(Math.random() * LUXURY_CARS.length)];
-      let obsLane = Math.floor(Math.random() * LANES);
-      obstacles.push({ lane: obsLane, y: -OBS_H, car: carType, swerve: 0 });
+      const randCar = () => LUXURY_CARS[Math.floor(Math.random() * LUXURY_CARS.length)];
+
+      const first = tryPlace(Math.floor(Math.random() * LANES), -OBS_H);
+      if (!first) return;
 
       // Podwójne przeszkody — wcześniej i częściej
       if (elapsed > 6000 && Math.random() < 0.35) {
-        let second = (obsLane + (Math.random() < 0.5 ? 1 : -1) + LANES) % LANES;
-        const carType2 = LUXURY_CARS[Math.floor(Math.random() * LUXURY_CARS.length)];
-        obstacles.push({ lane: second, y: -OBS_H - 30, car: carType2, swerve: 0 });
+        const second = (first.lane + (Math.random() < 0.5 ? 1 : -1) + LANES) % LANES;
+        tryPlace(second, -OBS_H - 30);
       }
 
-      // Po 25s czasem blokada 2 pasów z jednym przejazdem
+      // Po 25s czasem blokada 2 pasów – zawsze z jednym wolnym przejazdem
       if (elapsed > 25000 && Math.random() < 0.2) {
-        const free = obsLane;
+        const free = (first.lane + 1 + Math.floor(Math.random() * (LANES - 1))) % LANES;
         for (let l = 0; l < LANES; l++) {
-          if (l !== free && !obstacles.some(o => o.lane === l && o.y < 0)) {
-            const ct = LUXURY_CARS[Math.floor(Math.random() * LUXURY_CARS.length)];
-            obstacles.push({ lane: l, y: -OBS_H - 15, car: ct, swerve: 0 });
-          }
+          if (l !== free && l !== first.lane) tryPlace(l, -OBS_H - 15);
         }
       }
 
-      // Po 15s: niektóre auta zmieniają pas
+      // Po 15s: niektóre auta zmieniają pas (o ile nie zamkną przejazdu)
       if (elapsed > 15000 && Math.random() < 0.15) {
-        obstacles[obstacles.length - 1].swerve = (Math.random() < 0.5 ? -1 : 1) * 0.3;
+        const o = obstacles[obstacles.length - 1];
+        o.swerve = (Math.random() < 0.5 ? -1 : 1) * 0.3;
+        if (blockedLanes(o.y).size >= LANES) o.swerve = 0;
       }
+
+      // Dodaje auto tylko wtedy, gdy w tym "rzędzie" zostaje wolny pas
+      function tryPlace(laneIdx, y) {
+        const blocked = blockedLanes(y);
+        blocked.add(laneIdx);
+        if (blocked.size >= LANES) return null;
+        const o = { lane: laneIdx, y, car: randCar(), swerve: 0 };
+        obstacles.push(o);
+        return o;
+      }
+    }
+
+    // Pasy zajęte przez auta na podobnej wysokości (rząd, którego nie da się
+    // przejechać "zygzakiem"). Auto zmieniające pas zajmuje też pas docelowy.
+    const ROW_GAP = OBS_H + CAR_H + 40;
+    function blockedLanes(y) {
+      const s = new Set();
+      for (const o of obstacles) {
+        if (Math.abs(o.y - y) >= ROW_GAP) continue;
+        if (o.swerve) {
+          const to = Math.max(0, Math.min(LANES - 1, Math.round(o.lane + Math.sign(o.swerve))));
+          for (let l = Math.min(Math.floor(o.lane), to); l <= Math.max(Math.ceil(o.lane), to); l++) s.add(l);
+        } else {
+          s.add(Math.round(o.lane));
+        }
+      }
+      return s;
     }
 
     function spawnParticles(x, y, color, count, spread) {

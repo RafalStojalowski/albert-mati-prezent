@@ -35,7 +35,7 @@ const TOTAL  = SPAWNS.length;
 
 const WIN_TEXTS = [
   'Przemo jest teraz bezpieczny',
-  'Zaspiańskiego Cassanove\noraz jego auto wyczynowe',
+  'teraz trzeba odwiedzić Zaspiańskiego Cassanove\noraz jego auto wyczynowe',
   'na pewno wiecie gdzie mieszka',
 ];
 
@@ -677,8 +677,24 @@ async function showWinSequence() {
 }
 
 async function animText(ctx, text, cx, ty, W, H, iconY) {
-  const lines = text.split('\n');
   const fontSize = Math.min(22, Math.max(14, Math.round(W * 0.045)));
+  const lineH = fontSize + 8;
+  ctx.font = `bold ${fontSize}px system-ui`;
+
+  // Zawijanie długich linii do szerokości ekranu
+  const maxW = W * 0.86;
+  const lines = [];
+  for (const para of text.split('\n')) {
+    let cur = '';
+    for (const word of para.split(' ')) {
+      const test = cur ? cur + ' ' + word : word;
+      if (cur && ctx.measureText(test).width > maxW) { lines.push(cur); cur = word; }
+      else cur = test;
+    }
+    lines.push(cur);
+  }
+  // Blok tekstu kończy się nad ikoną Przema
+  const startY = Math.min(ty, iconY - 52 - 28 - (lines.length - 1) * lineH);
 
   async function frame(alpha) {
     ctx.fillStyle = 'rgba(0,0,0,0.88)';
@@ -688,11 +704,13 @@ async function animText(ctx, text, cx, ty, W, H, iconY) {
     ctx.font = `bold ${fontSize}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    lines.forEach((l, i) => ctx.fillText(l, cx, ty + i * (fontSize + 8)));
+    lines.forEach((l, i) => ctx.fillText(l, cx, startY + i * lineH));
   }
 
+  // Czas na przeczytanie: min. 4,5 s, dłuższe teksty dłużej
+  const readMs = Math.max(4500, text.length * 90);
   for (let a = 0; a <= 1; a += 0.06) { await frame(a); await sleep(16); }
-  await sleep(2200);
+  await sleep(readMs);
   for (let a = 1; a >= 0; a -= 0.06) { await frame(a); await sleep(16); }
   await sleep(300);
 }

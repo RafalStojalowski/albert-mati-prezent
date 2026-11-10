@@ -1,17 +1,24 @@
 // Scena siódmego punktu: Wiadukt – FINAŁ
 // Gratulacje i sekwencja urodzinowa z konfetti → "Zobacz wiadukt" →
-// kamera, w której w kierunku wiaduktu (scene.target) widać zdjęcie wiadukt.jpg.
-// Przy kolejnych otwarciach kamery od razu włącza się podgląd wiaduktu (pamiątka).
+// kamera, w której w kierunku wiaduktu (scene.target) wisi zdjęcie wiadukt.jpg
+// (przesuwa się przy obracaniu i pochylaniu telefonu), a pod nim pojawiają się
+// życzenia. Przy kolejnych otwarciach kamery od razu włącza się wiadukt (pamiątka).
 
-import {
-  createAimArrow, turnHint, tiltHint,
-  compassHeading, bearingTo, angDiff, cameraElevation, screenFov,
-} from './aim-arrow.js';
+import { openAnchorView } from './anchor-view.js';
+import { bearingTo } from './aim-arrow.js';
 
-const PHOTO       = 'src/wiadukt.jpg';
-const TARGET_ELEV = 0;            // wiadukt na wysokości horyzontu
+const PHOTO = 'src/wiadukt.jpg';
 // Zerowane razem z postępem gry (menu → Wyzeruj postęp)
-const SEEN_KEY    = ((window.GAME_CONFIG && window.GAME_CONFIG.storageKey) || 'zaspa') + '-wiadukt-seen';
+const SEEN_KEY = ((window.GAME_CONFIG && window.GAME_CONFIG.storageKey) || 'zaspa') + '-wiadukt-seen';
+
+// Napisy wyświetlane przy zdjęciu wiaduktu
+const CAPTIONS = [
+  'Wszystkiego najlepszego z okazji urodzin!',
+  'To jest specjalna pamiątka, do której zawsze możecie wracać',
+  'Będziecie mogli zobaczyć wiadukt nawet gdy go już nie będzie z nami',
+  ':(',
+];
+const CAPTION_MS = 4000;
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -28,18 +35,21 @@ function markFinaleSeen() {
   try { localStorage.setItem(SEEN_KEY, '1'); } catch (_) { /* ignoruj */ }
 }
 
-export async function startWiaduktScene({ origin, sceneTarget, overlay, onEnd, devMode }) {
-  let showFinale = !finaleSeen();
-  while (true) {
-    if (showFinale) {
-      await playFinale();
-      markFinaleSeen();
+export async function startWiaduktScene({ origin, sceneTarget, onEnd }) {
+  try {
+    let showFinale = !finaleSeen();
+    while (true) {
+      if (showFinale) {
+        await playFinale();
+        markFinaleSeen();
+      }
+      const result = await viewWiadukt(bearingTo(origin, sceneTarget));
+      if (result !== 'replay') break;
+      showFinale = true;
     }
-    const result = await viewWiadukt({ origin, sceneTarget, overlay, devMode });
-    if (result !== 'replay') break;
-    showFinale = true;
+  } finally {
+    onEnd && onEnd();
   }
-  onEnd && onEnd();
 }
 
 // ---------- Finał: gratulacje + konfetti ----------
@@ -63,11 +73,11 @@ async function playFinale() {
 
   const texts = [
     { text: 'Gratulacje!', size: 'big', duration: 2500 },
-    { text: 'Ukończyliście\nZaspiański Spacer!', size: 'medium', duration: 3000 },
+    { text: 'To koniec\nZaspiańskiego spaceru!', size: 'medium', duration: 3000 },
     { text: 'Wszystkiego najlepszego\nAlbert i Mati!', size: 'big', duration: 3500 },
     { text: '🎂🎉🎈', size: 'emoji', duration: 2500 },
     { text: 'Przemo jest z Was dumny!', size: 'medium', duration: 3000 },
-    { text: 'A teraz Wasza nagroda…', size: 'medium', duration: 0 },
+    { text: 'Oto Wasza nagroda…', size: 'medium', duration: 0 },
   ];
 
   for (const item of texts) {
@@ -89,141 +99,48 @@ async function playFinale() {
   await new Promise(res => btn.addEventListener('click', res, { once: true }));
 
   cancelAnimationFrame(confettiRaf.id);
-  await fadeTo(finaleEl, 0, 700);
   finaleEl.remove();
 }
 
 // ---------- Nagroda: wiadukt na kamerce w jego kierunku ----------
 
-async function viewWiadukt({ origin, sceneTarget, overlay, devMode }) {
-  // iOS 13+: pozwolenie na czujniki
-  let sensorsDenied = false;
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try {
-      if ((await DeviceOrientationEvent.requestPermission()) !== 'granted') sensorsDenied = true;
-    } catch (_) { /* ignoruj */ }
-  }
+async function viewWiadukt(bearing) {
+  const view = await openAnchorView({ hint: 'Wiadukt – pamiątka na zawsze' });
 
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { ideal: 'environment' } }, audio: false,
-  });
-  const cam = document.createElement('video');
-  cam.className = 'ar-video';
-  cam.setAttribute('playsinline', '');
-  cam.muted = true;
-  cam.srcObject = stream;
-  document.body.appendChild(cam);
-  await cam.play();
+  const img = document.createElement('img');
+  img.src = PHOTO;
+  img.alt = 'Wiadukt';
+  img.classList.add('vm-wide');
+  const it = view.anchor(img, { bearing });
+  view.guide(it);
 
-  const labelEl  = overlay.querySelector('.ar-label');
-  const hintEl   = overlay.querySelector('.ar-hint');
-  const xhair    = overlay.querySelector('.ar-crosshair');
-  const bottomEl = overlay.querySelector('.ar-bottom');
-  const ORIG_BOTTOM = bottomEl.innerHTML;
+  view.controls.innerHTML =
+    '<button class="wiadukt-replay" aria-label="Powtórz finał">🎉 Powtórz finał</button>';
+  const replay = new Promise(res =>
+    view.controls.querySelector('.wiadukt-replay').addEventListener('click', res, { once: true }));
 
-  labelEl.textContent = 'Wiadukt – pamiątka na zawsze';
-  hintEl.textContent  = 'Obróć telefon w stronę strzałki';
-  bottomEl.innerHTML  =
-    '<button class="wiadukt-replay" aria-label="Powtórz finał">🎉</button>' +
-    '<button class="ar-close" aria-label="Zamknij">✕</button>';
-  xhair.style.opacity = '0';
-  overlay.classList.remove('hidden');
-
-  const photo = document.createElement('img');
-  photo.src = PHOTO;
-  photo.alt = 'Wiadukt';
-  photo.className = 'wiadukt-photo';
-  photo.style.opacity = '0';
-  overlay.appendChild(photo);
-
-  const arrow = createAimArrow(overlay);
-
-  let heading = null;
-  let elevation = 0;
-  let gotAbsolute = false;
-  let running = true;
-  const orientEvtAbs = 'ondeviceorientationabsolute' in window
-    ? 'deviceorientationabsolute' : null;
-
-  function onOrientAbs(e) {
-    if (e.alpha == null) return;
-    heading   = compassHeading(e.alpha, e.beta, e.gamma);
-    elevation = cameraElevation(e.beta, e.gamma);
-    gotAbsolute = true;
-  }
-  function onOrientRel(e) {
-    if (e.alpha == null || gotAbsolute) return;
-    heading   = compassHeading(e.alpha, e.beta, e.gamma);
-    elevation = cameraElevation(e.beta, e.gamma);
-  }
-
-  const noCompass = devMode || sensorsDenied;
-  if (!noCompass) {
-    if (orientEvtAbs) window.addEventListener(orientEvtAbs, onOrientAbs);
-    window.addEventListener('deviceorientation', onOrientRel);
-  }
-
-  // Bez kompasu – zdjęcie po prostu na środku
-  function center(msg) {
-    photo.style.left = '50%';
-    photo.style.top  = '50%';
-    photo.style.opacity = '1';
-    arrow.hide();
-    hintEl.textContent = msg;
-  }
-  if (noCompass) center(devMode ? '[DEV] bez kompasu' : '');
-  const fallbackTimer = setTimeout(() => {
-    if (heading === null && running && !noCompass) center('Brak kompasu');
-  }, 3000);
-
-  const targetBearing = bearingTo(origin, sceneTarget);
-
-  function loop() {
-    if (!running) return;
-    if (heading !== null && !noCompass) {
-      const diff  = angDiff(heading, targetBearing); // > 0 → cel po lewej
-      const vDiff = elevation - TARGET_ELEV;          // > 0 → kamera za wysoko
-      const fov   = screenFov();
-
-      photo.style.left = (50 - (diff  / fov.h) * 100) + '%';
-      photo.style.top  = (50 + (vDiff / fov.v) * 100) + '%';
-      photo.style.opacity = Math.abs(diff) < 90 ? '1' : '0';
-
-      // Strzałka tylko gdy środek zdjęcia jest poza ekranem
-      if (Math.abs(diff) > fov.h / 2) {
-        arrow.update(diff);
-        hintEl.textContent = turnHint(diff);
-      } else if (Math.abs(vDiff) > fov.v / 2) {
-        arrow.point(vDiff > 0 ? 'down' : 'up', Math.abs(vDiff));
-        hintEl.textContent = tiltHint(vDiff);
-      } else {
-        arrow.hide();
-        hintEl.textContent = '';
-      }
+  // Napisy pod wiaduktem – po pierwszym znalezieniu zdjęcia
+  const caption = document.createElement('div');
+  caption.className = 'vm-caption';
+  caption.style.opacity = '0';
+  view.layer.appendChild(caption);
+  (async () => {
+    await view.waitFound(it);
+    await sleep(1500);
+    for (const line of CAPTIONS) {
+      if (!view.running) return;
+      caption.textContent = line;
+      await fadeTo(caption, 1, 700);
+      await sleep(CAPTION_MS);
+      if (line !== CAPTIONS[CAPTIONS.length - 1]) await fadeTo(caption, 0, 600);
     }
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
+  })();
 
-  const result = await new Promise(res => {
-    bottomEl.querySelector('.ar-close').addEventListener('click', () => res('close'), { once: true });
-    bottomEl.querySelector('.wiadukt-replay').addEventListener('click', () => res('replay'), { once: true });
-  });
-
-  running = false;
-  clearTimeout(fallbackTimer);
-  if (orientEvtAbs) window.removeEventListener(orientEvtAbs, onOrientAbs);
-  window.removeEventListener('deviceorientation', onOrientRel);
-  stream.getTracks().forEach(t => t.stop());
-  cam.remove();
-  photo.remove();
-  arrow.remove();
-  xhair.style.opacity = '';
-  labelEl.textContent = '';
-  hintEl.textContent  = '';
-  bottomEl.innerHTML  = ORIG_BOTTOM;
-  overlay.classList.add('hidden');
+  const result = await Promise.race([
+    view.closed.then(() => 'close'),
+    replay.then(() => 'replay'),
+  ]);
+  view.close();
   return result;
 }
 

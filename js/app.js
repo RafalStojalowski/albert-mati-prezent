@@ -138,10 +138,10 @@
       const { marker, index } = spotMarkers[spot.id];
       marker.setIcon(isHiddenSpot(spot) ? INVISIBLE_ICON : spotIcon(index, spotState(index)));
     });
-    const pTxt = devModeActive
-      ? `${progress.visited.length}/${CFG.spots.length} 🛠`
-      : (progress.visited.length > 0 ? `✓ ${progress.visited.length}` : '');
-    $('progress').textContent = pTxt;
+    // Bez licznika punktów – gracz nie wie, ile zostało do końca
+    const pEl = $('progress');
+    pEl.textContent = devModeActive ? '🛠' : '';
+    pEl.style.display = devModeActive ? '' : 'none';
     updateArButton();
   }
 
@@ -176,46 +176,19 @@
     updateArButton();
     const onEnd = () => { arActive = false; updateArButton(); };
     try {
-      if (spot.scene && spot.scene.type === 'brzezno') {
-        const mod = await import(new URL('js/scene-brzezno.js', document.baseURI).href);
-        await mod.startBrzeznoScene({
-          origin, sceneTarget: spot.scene.target,
-          overlay: $('arOverlay'), onEnd, devMode: devModeActive,
-        });
-      } else if (spot.scene && spot.scene.type === 'zaspa1') {
-        const mod = await import(new URL('js/scene-zaspa1.js', document.baseURI).href);
-        await mod.startZaspa1Scene({
-          origin, sceneTarget: spot.scene.target,
-          overlay: $('arOverlay'), onEnd, devMode: devModeActive,
-        });
-      } else if (spot.scene && spot.scene.type === 'radziun') {
-        const mod = await import(new URL('js/scene-radziun.js', document.baseURI).href);
-        await mod.startRadziunScene({
-          origin, sceneTarget: spot.scene.target,
-          overlay: $('arOverlay'), onEnd, devMode: devModeActive,
-        });
-      } else if (spot.scene && spot.scene.type === 'pzu') {
-        const mod = await import(new URL('js/scene-pzu.js', document.baseURI).href);
-        await mod.startPzuScene({
-          origin, sceneTarget: spot.scene.target,
-          overlay: $('arOverlay'), onEnd, devMode: devModeActive,
-        });
-      } else if (spot.scene && spot.scene.type === 'kort') {
-        const mod = await import(new URL('js/scene-kort.js', document.baseURI).href);
-        await mod.startKortScene({
-          origin, sceneTarget: spot.scene.target,
-          enterRadius: spot.scene.enterRadius || 6,
-          overlay: $('arOverlay'), onEnd, devMode: devModeActive,
-        });
-      } else if (spot.scene && spot.scene.type === 'sahara') {
-        const mod = await import(new URL('js/scene-sahara.js', document.baseURI).href);
-        await mod.startSaharaScene({
-          origin, sceneTarget: spot.scene.target,
-          overlay: $('arOverlay'), onEnd, devMode: devModeActive,
-        });
-      } else if (spot.scene && spot.scene.type === 'wiadukt') {
-        const mod = await import(new URL('js/scene-wiadukt.js', document.baseURI).href);
-        await mod.startWiaduktScene({
+      const SCENES = {
+        brzezno: ['js/scene-brzezno.js', 'startBrzeznoScene'],
+        zaspa1:  ['js/scene-zaspa1.js',  'startZaspa1Scene'],
+        radziun: ['js/scene-radziun.js', 'startRadziunScene'],
+        pzu:     ['js/scene-pzu.js',     'startPzuScene'],
+        kort:    ['js/scene-kort.js',    'startKortScene'],
+        sahara:  ['js/scene-sahara.js',  'startSaharaScene'],
+        wiadukt: ['js/scene-wiadukt.js', 'startWiaduktScene'],
+      };
+      const sceneDef = spot.scene && SCENES[spot.scene.type];
+      if (sceneDef) {
+        const mod = await import(new URL(sceneDef[0], document.baseURI).href);
+        await mod[sceneDef[1]]({
           origin, sceneTarget: spot.scene.target,
           overlay: $('arOverlay'), onEnd, devMode: devModeActive,
         });
@@ -520,7 +493,8 @@
   let devTapCount = 0;
   let devTapTimer = null;
 
-  $('progress').addEventListener('click', () => {
+  // Ukryte włączenie trybu dev: 7 dotknięć tytułu
+  document.querySelector('.topbar .title').addEventListener('click', () => {
     devTapCount++;
     clearTimeout(devTapTimer);
     devTapTimer = setTimeout(() => { devTapCount = 0; }, 3000);

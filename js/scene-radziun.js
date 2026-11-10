@@ -1,90 +1,54 @@
 // Scena trzeciego punktu: Radziun – pod blokiem
-// Kamera → zdjęcie Przema przy Zaspowóz → zanika → minigra wyścigowa
+// Kamera → zdjęcie Przema przy Zaspowozie zawieszone przed graczem →
+// po chwili znika → minigra wyścigowa → nagranie Przema (teraz pograć w piłeczkę).
+
+import { openAnchorView, playVideoMessage } from './anchor-view.js';
+
+const PHOTO    = 'src/zaspowoz.jpg';
+const VIDEO    = 'src/przemo-zaspowoz.mp4';
+const SHOW_MS  = 5000;   // jak długo zdjęcie wisi po znalezieniu
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-export async function startRadziunScene({ origin, sceneTarget, overlay, onEnd, devMode }) {
-  // 1. Otwórz kamerę
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { ideal: 'environment' } }, audio: false,
-  });
-  const video = document.createElement('video');
-  video.className = 'ar-video';
-  video.setAttribute('playsinline', '');
-  video.muted = true;
-  video.srcObject = stream;
-  document.body.appendChild(video);
-  await video.play();
+export async function startRadziunScene({ onEnd }) {
+  const view = await openAnchorView({ hint: '' });
 
-  // 2. Nałóż zdjęcie Przema na kamerę
-  const photoEl = document.createElement('div');
-  photoEl.className = 'radziun-photo';
-  photoEl.innerHTML = '<img src="src/zaspowoz.jpg" alt="Przemo przy Zaspowóz">';
-  document.body.appendChild(photoEl);
+  const img = document.createElement('img');
+  img.src = PHOTO;
+  img.alt = 'Przemo przy Zaspowozie';
+  const it = view.anchor(img);       // zawieszone tam, gdzie patrzy telefon
+  view.guide(it);
 
-  const labelEl  = overlay.querySelector('.ar-label');
-  const hintEl   = overlay.querySelector('.ar-hint');
-  const bottomEl = overlay.querySelector('.ar-bottom');
-  const ORIG_BTM = bottomEl.innerHTML;
+  // Zdjęcie widoczne przez chwilę (licząc tylko czas, gdy jest na ekranie)
+  const result = await Promise.race([
+    (async () => {
+      let shown = 0, last = performance.now();
+      while (shown < SHOW_MS && view.running) {
+        await sleep(100);
+        const now = performance.now();
+        if (it.inView) shown += now - last;
+        last = now;
+      }
+      img.style.transition = 'opacity 1.5s ease';
+      img.style.opacity = '0';
+      view.setHint('Przemo znika…');
+      await sleep(1700);
+      return 'next';
+    })(),
+    view.closed.then(() => 'closed'),
+  ]);
+  view.close();
 
-  labelEl.textContent = 'Przemo przy Zaspowóz';
-  hintEl.textContent  = '';
-  bottomEl.innerHTML  = '<button class="ar-close" aria-label="Zamknij">✕</button>';
-  overlay.classList.remove('hidden');
+  if (result === 'closed') { onEnd && onEnd(); return; }
 
-  let cancelled = false;
-
-  function cleanupCamera() {
-    stream.getTracks().forEach(t => t.stop());
-    video.remove();
-    photoEl.remove();
-    labelEl.textContent = '';
-    hintEl.textContent  = '';
-    bottomEl.innerHTML  = ORIG_BTM;
-    overlay.classList.add('hidden');
-  }
-
-  bottomEl.querySelector('.ar-close').addEventListener('click', () => {
-    cancelled = true;
-    cleanupCamera();
-    onEnd && onEnd();
-  });
-
-  // 3. Czekaj chwilę, potem Przemo zanika
-  if (devMode) {
-    hintEl.textContent = '[DEV] Dotknij aby pominąć';
-    await new Promise(res => {
-      const skip = () => { overlay.removeEventListener('click', skip); res(); };
-      overlay.addEventListener('click', skip, { once: true });
-      setTimeout(res, 5000);
-    });
-  } else {
-    await sleep(4500);
-  }
-
-  if (cancelled) return;
-
-  // Fade out zdjęcia
-  photoEl.style.transition = 'opacity 1.5s ease';
-  photoEl.style.opacity = '0';
-  hintEl.textContent = 'Przemo znika…';
-  await sleep(1800);
-
-  if (cancelled) return;
-
-  // 4. Zamknij kamerę
-  cleanupCamera();
-
-  // 5. Uruchom minigrę wyścigową
+  // Minigra wyścigowa
   const mgMod = await import(new URL('js/minigame-racing.js', document.baseURI).href);
   await mgMod.startRacingGame();
 
-  // 6. Nagranie Przema: teraz trzeba pograć w piłeczkę
-  const { playVideoMessage } = await import('./video-message.js');
-  await playVideoMessage('src/przemo-zaspowoz.mp4', {
-    start: 'button',
-    hint: 'Przemo ma Wam coś do powiedzenia',
-  });
-
-  onEnd && onEnd();
+  // Nagranie Przema – zawieszone przed graczem po kliknięciu "Odtwórz"
+  try {
+    await playVideoMessage(VIDEO, { start: 'button', hint: 'Przemo ma Wam coś do powiedzenia' });
+  } finally {
+    onEnd && onEnd();
+  }
 }

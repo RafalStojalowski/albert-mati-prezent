@@ -64,14 +64,14 @@ window.GAME_CONFIG = {
     // 5) Kort tenisowy
     {
       id: 'zaspa-kort',
-      lat: 54.3890,
-      lng: 18.5994,
+      lat: 54.38900,
+      lng: 18.59942,
       hidden: true,
       revealRadius: 500,
       scene: {
         type: 'kort',
-        target: { lat: 54.3889, lng: 18.5992 },
-        enterRadius: 6,
+        // Kierunek, w którym na kamerce stoi Przemo (i potem jego nagranie)
+        target: { lat: 54.38894, lng: 18.59917 },
       },
     },
     // 6) Sahara
