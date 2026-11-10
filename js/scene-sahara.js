@@ -4,11 +4,15 @@
 // razem z napisem o odpoczynku. Przycisk "Już odpocząłem" → nagranie
 // przemo-sachara.mp4 (z dźwiękiem) z podpowiedzią do kolejnego punktu.
 
-import { createAimArrow, turnHint } from './aim-arrow.js';
+import {
+  createAimArrow, turnHint, tiltHint, cameraElevation, screenFov,
+} from './aim-arrow.js';
+import { playVideoMessage } from './video-message.js';
 
-const DEG     = Math.PI / 180;
-const AIM_TOL = 20;    // stopnie – w tym zakresie nagranie jest w pełni widoczne
-const H_FOV   = 60;    // przybliżony poziomy kąt widzenia kamery
+const DEG      = Math.PI / 180;
+const AIM_TOL  = 20;   // stopnie – "znaleziony" w poziomie
+const TILT_TOL = 20;   // stopnie – "znaleziony" w pionie
+const TARGET_ELEV = 0; // Przemo na wysokości horyzontu
 const SPIN_VIDEO  = 'src/przemo-sie-kreci.mp4';
 const FINAL_VIDEO = 'src/przemo-sachara.mp4';
 const REST_TEXT   = 'Tutaj możesz odpocząć przy kręcącym się Przemie';
@@ -36,13 +40,6 @@ function bearingTo(from, to) {
 
 function angDiff(a, b) { return ((a - b + 540) % 360) - 180; }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-async function fadeTo(el, opacity, ms) {
-  el.style.transition = `opacity ${ms}ms ease`;
-  el.style.opacity    = String(opacity);
-  return sleep(ms);
-}
 
 function makeVideo(src, { loop = false, muted = false } = {}) {
   const v = document.createElement('video');
@@ -69,9 +66,6 @@ export async function startSaharaScene({ origin, sceneTarget, overlay, onEnd, de
   }
 
   // Nagranie końcowe – wczytujemy z wyprzedzeniem
-  const finalVid = makeVideo(FINAL_VIDEO);
-  finalVid.className = 'sahara-video sahara-final';
-  finalVid.load();
 
   // 1. Kamera
   let stream;
@@ -137,11 +131,10 @@ export async function startSaharaScene({ origin, sceneTarget, overlay, onEnd, de
     stream.getTracks().forEach(t => t.stop());
     cam.remove();
     spinVid.pause(); spinVid.remove();
-    finalVid.pause(); finalVid.remove();
     arrow.remove();
     restBtn.remove();
-    overlay.querySelectorAll('.sahara-end').forEach(el => el.remove());
     xhair.style.opacity = '';
+    bottomEl.style.display = '';
     topEl.style.opacity = '';
     topEl.style.transition = '';
     overlay.style.pointerEvents = '';
@@ -169,6 +162,7 @@ export async function startSaharaScene({ origin, sceneTarget, overlay, onEnd, de
     stopSensors();
     arrow.hide();
     spinVid.style.left = '50%';
+    spinVid.style.top  = '50%';
     spinVid.style.opacity = '1';
     markFound();
     if (msg) hintEl.textContent = msg;
@@ -176,18 +170,21 @@ export async function startSaharaScene({ origin, sceneTarget, overlay, onEnd, de
 
   // 3. Kompas
   let heading = null;
+  let elevation = 0;
   let gotAbsolute = false;
   const orientEvtAbs = 'ondeviceorientationabsolute' in window
     ? 'deviceorientationabsolute' : null;
 
   function onOrientAbs(e) {
     if (e.alpha == null) return;
-    heading = compassHeading(e.alpha, e.beta, e.gamma);
+    heading   = compassHeading(e.alpha, e.beta, e.gamma);
+    elevation = cameraElevation(e.beta, e.gamma);
     gotAbsolute = true;
   }
   function onOrientRel(e) {
     if (e.alpha == null || gotAbsolute) return;
-    heading = compassHeading(e.alpha, e.beta, e.gamma);
+    heading   = compassHeading(e.alpha, e.beta, e.gamma);
+    elevation = cameraElevation(e.beta, e.gamma);
   }
   if (orientEvtAbs) window.addEventListener(orientEvtAbs, onOrientAbs);
   window.addEventListener('deviceorientation', onOrientRel);
@@ -204,21 +201,27 @@ export async function startSaharaScene({ origin, sceneTarget, overlay, onEnd, de
   function loop() {
     if (!running || !resting) return;
     if (heading !== null && !devMode && !sensorsDenied) {
-      const diff    = angDiff(heading, targetBearing); // > 0 → cel po lewej
-      const absDiff = Math.abs(diff);
+      const diff  = angDiff(heading, targetBearing); // > 0 → cel po lewej
+      const vDiff = elevation - TARGET_ELEV;          // > 0 → telefon za wysoko
+      const fov   = screenFov();
 
-      spinVid.style.left = (50 - (diff / H_FOV) * 100) + '%';
-      const edge = H_FOV / 2 + 10;
-      const vis  = absDiff >= edge ? 0
-        : Math.min(1, 1 - (absDiff - AIM_TOL) / (edge - AIM_TOL));
-      spinVid.style.opacity = vis.toFixed(2);
+      // Nagranie przesuwa się po ekranie przy obracaniu i pochylaniu telefonu
+      spinVid.style.left = (50 - (diff  / fov.h) * 100) + '%';
+      spinVid.style.top  = (50 + (vDiff / fov.v) * 100) + '%';
+      spinVid.style.opacity = Math.abs(diff) < 90 ? '1' : '0';
 
-      if (absDiff <= AIM_TOL) {
-        arrow.hide();
-        markFound();
-      } else {
+      const hOk = Math.abs(diff)  <= AIM_TOL;
+      const vOk = Math.abs(vDiff) <= TILT_TOL;
+      if (hOk && vOk) markFound();
+
+      if (Math.abs(diff) > fov.h / 2 || !hOk && !found) {
         arrow.update(diff);
         if (!found) hintEl.textContent = turnHint(diff);
+      } else if (Math.abs(vDiff) > fov.v / 2 || !vOk && !found) {
+        arrow.point(vDiff > 0 ? 'down' : 'up', Math.abs(vDiff));
+        if (!found) hintEl.textContent = tiltHint(vDiff);
+      } else {
+        arrow.hide();
       }
     }
     requestAnimationFrame(loop);
@@ -226,52 +229,23 @@ export async function startSaharaScene({ origin, sceneTarget, overlay, onEnd, de
   requestAnimationFrame(loop);
 
   // 5. "Już odpocząłem!" → nagranie końcowe
-  restBtn.addEventListener('click', async () => {
+  // Nagranie końcowe w tym samym miejscu co kręcący się Przemo
+  restBtn.addEventListener('click', () => {
     if (!resting || !running) return;
     resting = false;
     stopSensors();
     arrow.remove();
     restBtn.remove();
-
-    // Start odtwarzania od razu w geście kliknięcia (dźwięk na iOS)
-    finalVid.style.opacity = '0';
-    overlay.appendChild(finalVid);
-    const playing = finalVid.play().catch(() => {
-      // Autoplay z dźwiękiem zablokowany – grajmy wyciszone
-      finalVid.muted = true;
-      return finalVid.play().catch(() => {});
-    });
-
-    await Promise.all([
-      fadeTo(topEl, 0, 400),
-      fadeTo(spinVid, 0, 600),
-    ]);
     spinVid.pause();
-    await fadeTo(finalVid, 1, 600);
-    await playing;
+    spinVid.style.opacity = '0';
+    topEl.style.opacity = '0';
+    bottomEl.style.display = 'none';
 
-    await new Promise(res => {
-      if (finalVid.ended) return res();
-      finalVid.addEventListener('ended', res, { once: true });
-      finalVid.addEventListener('error', res, { once: true });
-    });
-    if (!running) return;
-
-    // Po nagraniu: obejrzyj jeszcze raz albo zamknij
-    const endEl = document.createElement('div');
-    endEl.className = 'sahara-end';
-    endEl.innerHTML =
-      '<button class="sahara-again">↺ Obejrzyj jeszcze raz</button>' +
-      '<button class="sahara-done">Dalej</button>';
-    overlay.appendChild(endEl);
-    endEl.querySelector('.sahara-done').addEventListener('click', finish);
-    endEl.querySelector('.sahara-again').addEventListener('click', () => {
-      endEl.remove();
-      finalVid.currentTime = 0;
-      finalVid.play().catch(() => {});
-      finalVid.addEventListener('ended', () => {
-        if (running) overlay.appendChild(endEl);
-      }, { once: true });
-    });
+    // Wywołane synchronicznie w kliknięciu – dźwięk działa także na iOS
+    playVideoMessage(FINAL_VIDEO, {
+      bearing: (devMode || sensorsDenied) ? null : targetBearing,
+      ownCamera: false,
+      start: 'now',
+    }).then(finish);
   });
 }

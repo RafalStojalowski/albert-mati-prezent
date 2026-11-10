@@ -126,7 +126,10 @@ export async function startKortScene({ origin, sceneTarget, enterRadius, overlay
     await mgMod.startTennisGame();
     // Nagranie Przema: zaprasza na wysuszone boisko
     const { playVideoMessage } = await import('./video-message.js');
-    await playVideoMessage('src/przemo-tenis.mp4');
+    await playVideoMessage('src/przemo-tenis.mp4', {
+      start: 'button',
+      hint: 'Przemo ma Wam coś do powiedzenia',
+    });
     labelEl.textContent = '';
     hintEl.textContent  = '';
     bottomEl.innerHTML  = ORIG_BTM;

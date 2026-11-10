@@ -51,13 +51,14 @@ window.GAME_CONFIG = {
     // 4) PZU
     {
       id: 'zaspa-pzu',
-      lat: 54.3934,
-      lng: 18.6092,
+      lat: 54.39344,
+      lng: 18.60917,
       hidden: true,
       revealRadius: 500,
       scene: {
         type: 'pzu',
-        target: { lat: 54.3937, lng: 18.6093 },
+        // Kierunek, w którym na kamerce wisi nagranie Przema
+        target: { lat: 54.39369, lng: 18.60928 },
       },
     },
     // 5) Kort tenisowy

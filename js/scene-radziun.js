@@ -81,7 +81,10 @@ export async function startRadziunScene({ origin, sceneTarget, overlay, onEnd, d
 
   // 6. Nagranie Przema: teraz trzeba pograć w piłeczkę
   const { playVideoMessage } = await import('./video-message.js');
-  await playVideoMessage('src/przemo-zaspowoz.mp4');
+  await playVideoMessage('src/przemo-zaspowoz.mp4', {
+    start: 'button',
+    hint: 'Przemo ma Wam coś do powiedzenia',
+  });
 
   onEnd && onEnd();
 }
