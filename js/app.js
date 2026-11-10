@@ -214,6 +214,12 @@
           origin, sceneTarget: spot.scene.target,
           overlay: $('arOverlay'), onEnd, devMode: devModeActive,
         });
+      } else if (spot.scene && spot.scene.type === 'wiadukt') {
+        const mod = await import(new URL('js/scene-wiadukt.js', document.baseURI).href);
+        await mod.startWiaduktScene({
+          origin, sceneTarget: spot.scene.target,
+          overlay: $('arOverlay'), onEnd, devMode: devModeActive,
+        });
       } else if (spot.ar) {
         if (!arModule) arModule = import(AR_MODULE_URL);
         const mod = await arModule;
