@@ -3,13 +3,14 @@
 // Po wycelowaniu pojawia się zdjęcie Przema, napis "Teraz trochę pogramy",
 // odliczanie i minigra (obrona Przema). Po wygranej – podpowiedź do kolejnego punktu.
 
-import { createAimArrow, turnHint } from './aim-arrow.js';
+import { createAimArrow, turnHint, tiltHint, cameraElevation, screenFov } from './aim-arrow.js';
 
-const DEG     = Math.PI / 180;
-const HOLD_MS = 2000;   // ms trzymania celownika
-const AIM_TOL = 20;     // stopnie tolerancji kompasowej
-const H_FOV   = 60;     // przybliżony poziomy kąt widzenia kamery
-const PHOTO   = 'src/przemo-petla-tramwajowa.png';
+const DEG      = Math.PI / 180;
+const HOLD_MS  = 2000;  // ms trzymania celownika
+const AIM_TOL  = 20;    // stopnie tolerancji w poziomie (kompas)
+const TILT_TOL = 15;    // stopnie tolerancji w pionie (pochylenie)
+const TARGET_ELEV = 0;  // Przemo stoi na wysokości horyzontu
+const PHOTO    = 'src/przemo-petla-tramwajowa.png';
 
 // ---------- Math ----------
 
@@ -145,18 +146,21 @@ export async function startZaspa1Scene({ origin, sceneTarget, overlay, onEnd, de
 
   // 3. Kompas – absolute, z fallbackiem na relative
   let heading = null;
+  let elevation = 0;
   let gotAbsolute = false;
   const orientEvtAbs = 'ondeviceorientationabsolute' in window
     ? 'deviceorientationabsolute' : null;
 
   function onOrientAbs(e) {
     if (e.alpha == null) return;
-    heading = compassHeading(e.alpha, e.beta, e.gamma);
+    heading   = compassHeading(e.alpha, e.beta, e.gamma);
+    elevation = cameraElevation(e.beta, e.gamma);
     gotAbsolute = true;
   }
   function onOrientRel(e) {
     if (e.alpha == null || gotAbsolute) return;
-    heading = compassHeading(e.alpha, e.beta, e.gamma);
+    heading   = compassHeading(e.alpha, e.beta, e.gamma);
+    elevation = cameraElevation(e.beta, e.gamma);
   }
   if (orientEvtAbs) window.addEventListener(orientEvtAbs, onOrientAbs);
   window.addEventListener('deviceorientation', onOrientRel);
@@ -186,17 +190,19 @@ export async function startZaspa1Scene({ origin, sceneTarget, overlay, onEnd, de
   function aimLoop() {
     if (!running || triggered) return;
     if (heading !== null) {
-      // diff > 0 → cel jest po lewej stronie
+      // diff > 0 → cel jest po lewej; vDiff > 0 → kamera patrzy za wysoko
       const diff    = angDiff(heading, targetBearing);
+      const vDiff   = elevation - TARGET_ELEV;
       const absDiff = Math.abs(diff);
-      const aimed   = absDiff <= AIM_TOL;
+      const hOk     = absDiff <= AIM_TOL;
+      const vOk     = Math.abs(vDiff) <= TILT_TOL;
+      const aimed   = hOk && vOk;
 
-      // Zdjęcie przesuwa się po ekranie razem z obrotem telefonu
-      przemoEl.style.left = (50 - (diff / H_FOV) * 100) + '%';
-      const edge = H_FOV / 2 + 10;
-      const vis  = absDiff >= edge ? 0
-        : Math.min(1, 1 - (absDiff - AIM_TOL) / (edge - AIM_TOL));
-      przemoEl.style.opacity = vis.toFixed(2);
+      // Zdjęcie przesuwa się po ekranie razem z obrotem i pochyleniem telefonu
+      const fov = screenFov();
+      przemoEl.style.left = (50 - (diff  / fov.h) * 100) + '%';
+      przemoEl.style.top  = (50 + (vDiff / fov.v) * 100) + '%';
+      przemoEl.style.opacity = absDiff < 90 ? '1' : '0';
 
       if (aimed) {
         arrowEl.style.display = 'none';
@@ -208,11 +214,13 @@ export async function startZaspa1Scene({ origin, sceneTarget, overlay, onEnd, de
         hintEl.textContent  = 'Jest! Trzymaj nieruchomo…';
         if (elapsed >= HOLD_MS) { triggerSequence(); return; }
       } else {
-        arrow.update(diff);
+        // Najpierw kierunek w poziomie, potem pochylenie
+        if (!hOk) arrow.update(diff);
+        else arrow.point(vDiff > 0 ? 'down' : 'up', Math.abs(vDiff));
         aimStart = null;
         xhair.classList.remove('aim-ready');
         countEl.textContent = '';
-        if (!devMode) hintEl.textContent = turnHint(diff);
+        if (!devMode) hintEl.textContent = hOk ? tiltHint(vDiff) : turnHint(diff);
       }
     }
     requestAnimationFrame(aimLoop);
@@ -233,8 +241,9 @@ export async function startZaspa1Scene({ origin, sceneTarget, overlay, onEnd, de
 
   async function playSequence() {
     // Zdjęcie Przema na środku
-    przemoEl.style.transition = 'left 0.6s ease, opacity 0.6s ease';
+    przemoEl.style.transition = 'left 0.6s ease, top 0.6s ease, opacity 0.6s ease';
     przemoEl.style.left = '50%';
+    przemoEl.style.top  = '62%';
     przemoEl.style.opacity = '1';
     countEl.textContent = '';
     xhair.classList.remove('aim-ready');

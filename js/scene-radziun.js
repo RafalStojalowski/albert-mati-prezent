@@ -19,7 +19,7 @@ export async function startRadziunScene({ origin, sceneTarget, overlay, onEnd, d
   // 2. Nałóż zdjęcie Przema na kamerę
   const photoEl = document.createElement('div');
   photoEl.className = 'radziun-photo';
-  photoEl.innerHTML = '<img src="src/przemo.jpg" alt="Przemo przy Zaspowóz">';
+  photoEl.innerHTML = '<img src="src/zaspowoz.jpg" alt="Przemo przy Zaspowóz">';
   document.body.appendChild(photoEl);
 
   const labelEl  = overlay.querySelector('.ar-label');
@@ -78,6 +78,10 @@ export async function startRadziunScene({ origin, sceneTarget, overlay, onEnd, d
   // 5. Uruchom minigrę wyścigową
   const mgMod = await import(new URL('js/minigame-racing.js', document.baseURI).href);
   await mgMod.startRacingGame();
+
+  // 6. Nagranie Przema: teraz trzeba pograć w piłeczkę
+  const { playVideoMessage } = await import('./video-message.js');
+  await playVideoMessage('src/przemo-zaspowoz.mp4');
 
   onEnd && onEnd();
 }

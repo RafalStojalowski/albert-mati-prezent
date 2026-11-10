@@ -13,7 +13,8 @@ const SPAWN_START = 1200;
 const SPAWN_MIN   = 380;
 const INVULN_MS   = 1200;
 
-const WIN_TEXT = 'Przemo mówi:\nteraz trzeba pograć w piłeczkę!';
+// Po wygranej odtwarzane jest nagranie Przema (scene-radziun.js)
+const WIN_TEXT = 'Wygrana!';
 
 const LUXURY_CARS = [
   { name: 'AUDI',         body: '#1a1a2e', accent: '#4a4a6a', glass: '#6688bb', stripe: '#888' },
@@ -26,11 +27,13 @@ const LUXURY_CARS = [
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// Ładowanie obrazka Zaspowóz (placeholder do podmiany)
+// Opcjonalny obrazek Zaspowozu widzianego z góry (pionowy, ok. 54×95).
+// Gdy pliku nie ma – auto jest rysowane w kodzie.
+// (src/zaspowoz.jpg to zdjęcie z Przemem do sceny na kamerze, nie sprite.)
 let zaspowozImg = null;
 const img = new Image();
 img.onload = () => { zaspowozImg = img; };
-img.src = 'src/zaspowoz.jpg';
+img.src = 'src/zaspowoz-auto.png';
 
 export async function startRacingGame() {
   while (true) {
@@ -662,7 +665,7 @@ async function showWinSequence() {
     await sleep(16);
   }
 
-  await sleep(3000);
+  await sleep(1500);
 
   for (let a = 1; a >= 0; a -= 0.04) {
     ctx.globalAlpha = a;

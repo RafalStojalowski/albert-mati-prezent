@@ -399,6 +399,27 @@ html, body {
   0%, 100% { transform: scaleX(-1) translateX(0); }
   50%      { transform: scaleX(-1) translateX(10px); }
 }
+.aim-arrow.up,
+.aim-arrow.down {
+  left: 50%;
+  margin-left: -42px;
+}
+.aim-arrow.up {
+  top: 24%;
+  animation: aim-nudge-up 0.9s ease-in-out infinite;
+}
+.aim-arrow.down {
+  top: 76%;
+  animation: aim-nudge-down 0.9s ease-in-out infinite;
+}
+@keyframes aim-nudge-up {
+  0%, 100% { transform: rotate(-90deg) translateX(0); }
+  50%      { transform: rotate(-90deg) translateX(10px); }
+}
+@keyframes aim-nudge-down {
+  0%, 100% { transform: rotate(90deg) translateX(0); }
+  50%      { transform: rotate(90deg) translateX(10px); }
+}
 
 /* ---------- Scena Brzeźno ---------- */
 .brzezno-seq {
@@ -506,7 +527,7 @@ html, body {
 .radziun-photo {
   position: fixed;
   inset: 0;
-  z-index: 2500;
+  z-index: 3001;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -526,7 +547,7 @@ html, body {
   bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 2600;
+  z-index: 3003;
   width: 85%;
   max-width: 380px;
   padding: 18px 22px;
@@ -671,9 +692,9 @@ html, body {
 .zaspa1-przemo {
   position: absolute;
   left: 50%;
-  bottom: 12%;
+  top: 50%;
   width: min(240px, 55vw);
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   border-radius: 10px;
   border: 3px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6);
@@ -701,4 +722,76 @@ html, body {
   25%  { transform: scale(1);   opacity: 1; }
   80%  { transform: scale(0.9); opacity: 1; }
   100% { transform: scale(0.7); opacity: 0; }
+}
+
+/* ---------- Nagrania Przema (wspólny odtwarzacz) ---------- */
+.video-msg {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.92);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.video-msg.over-camera { background: rgba(0, 0, 0, 0.25); }
+.video-msg.visible { opacity: 1; }
+.video-msg video {
+  max-width: min(440px, 100%);
+  max-height: 70vh;
+  border-radius: 12px;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6);
+  background: #000;
+}
+.video-msg button {
+  padding: 14px 22px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+}
+.video-msg .video-msg-play,
+.video-msg .done { background: var(--accent); }
+.video-msg-end {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* ---------- Wiadukt – nagroda na kamerce ---------- */
+.wiadukt-reward-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 16px 30px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: sahara-btn-pulse 1.8s ease-in-out infinite;
+}
+.wiadukt-photo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(720px, 130vw);
+  transform: translate(-50%, -50%);
+  border-radius: 10px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 4;
 }

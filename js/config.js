@@ -89,13 +89,14 @@ window.GAME_CONFIG = {
     // 7) Wiadukt – finał
     {
       id: 'wiadukt',
-      lat: 54.3945,
-      lng: 18.5999,
+      lat: 54.39453,
+      lng: 18.59986,
       hidden: true,
       revealRadius: 500,
       scene: {
         type: 'wiadukt',
-        target: { lat: 54.3946, lng: 18.6018 },
+        // Kierunek, w którym na kamerce widać zdjęcie wiaduktu (nagroda)
+        target: { lat: 54.39461, lng: 18.60178 },
       },
     },
   ],

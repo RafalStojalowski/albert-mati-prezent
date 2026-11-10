@@ -8,7 +8,8 @@ const BALL_ACCEL   = 0.3;
 const AI_SPEED     = 3.8;
 const SERVE_DELAY  = 800;
 
-const WIN_TEXT = 'Przemo mówi:\nZapraszam na wysuszone boisko!';
+// Po wygranej odtwarzane jest nagranie Przema (scene-kort.js)
+const WIN_TEXT = 'Wygrana!';
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
@@ -309,7 +310,7 @@ async function showWinSequence() {
     await sleep(16);
   }
 
-  await sleep(3000);
+  await sleep(1500);
 
   for (let a = 1; a >= 0; a -= 0.04) {
     ctx.globalAlpha = a;

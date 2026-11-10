@@ -490,6 +490,7 @@
     if (!confirm('Na pewno wyzerować postęp?')) return;
     progress.visited = [];
     saveProgress();
+    try { localStorage.removeItem(CFG.storageKey + '-wiadukt-seen'); } catch (e) { /* ignorujemy */ }
     refreshSpots();
     $('menu').classList.add('hidden');
     toast('Postęp wyzerowany');

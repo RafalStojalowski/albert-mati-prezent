@@ -124,6 +124,9 @@ export async function startKortScene({ origin, sceneTarget, enterRadius, overlay
     overlay.classList.add('hidden');
     const mgMod = await import(new URL('js/minigame-tennis.js', document.baseURI).href);
     await mgMod.startTennisGame();
+    // Nagranie Przema: zaprasza na wysuszone boisko
+    const { playVideoMessage } = await import('./video-message.js');
+    await playVideoMessage('src/przemo-tenis.mp4');
     labelEl.textContent = '';
     hintEl.textContent  = '';
     bottomEl.innerHTML  = ORIG_BTM;
