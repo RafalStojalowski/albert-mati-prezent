@@ -119,21 +119,11 @@ async function viewWiadukt(bearing) {
   const replay = new Promise(res =>
     view.controls.querySelector('.wiadukt-replay').addEventListener('click', res, { once: true }));
 
-  // Napisy pod wiaduktem – po pierwszym znalezieniu zdjęcia
-  const caption = document.createElement('div');
-  caption.className = 'vm-caption';
-  caption.style.opacity = '0';
-  view.layer.appendChild(caption);
+  // Napisy na środku ekranu – po pierwszym znalezieniu zdjęcia
   (async () => {
     await view.waitFound(it);
     await sleep(1500);
-    for (const line of CAPTIONS) {
-      if (!view.running) return;
-      caption.textContent = line;
-      await fadeTo(caption, 1, 700);
-      await sleep(CAPTION_MS);
-      if (line !== CAPTIONS[CAPTIONS.length - 1]) await fadeTo(caption, 0, 600);
-    }
+    await view.showTexts(CAPTIONS, { ms: CAPTION_MS, keepLast: true });
   })();
 
   const result = await Promise.race([

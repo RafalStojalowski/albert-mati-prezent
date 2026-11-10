@@ -140,8 +140,8 @@
     });
     // Bez licznika punktów – gracz nie wie, ile zostało do końca
     const pEl = $('progress');
-    pEl.textContent = devModeActive ? '🛠' : '';
-    pEl.style.display = devModeActive ? '' : 'none';
+    pEl.textContent = '';
+    pEl.style.display = 'none';
     updateArButton();
   }
 

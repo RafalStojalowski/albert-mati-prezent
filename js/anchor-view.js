@@ -194,6 +194,29 @@ export async function openAnchorView({ ownCamera = true, hint = '' } = {}) {
     });
   }
 
+  // Sekwencja napisów na środku ekranu (kolejno, z przenikaniem)
+  let captionEl = null;
+  async function showTexts(lines, { ms = 3500, keepLast = false } = {}) {
+    if (!captionEl) {
+      captionEl = document.createElement('div');
+      captionEl.className = 'vm-caption';
+      captionEl.style.opacity = '0';
+      layer.appendChild(captionEl);
+    }
+    const fade = (o, t) => {
+      captionEl.style.transition = `opacity ${t}ms ease`;
+      captionEl.style.opacity = String(o);
+      return new Promise(r => setTimeout(r, t));
+    };
+    for (let i = 0; i < lines.length; i++) {
+      if (!running) return;
+      captionEl.textContent = lines[i];
+      await fade(1, 700);
+      await new Promise(r => setTimeout(r, ms));
+      if (!(keepLast && i === lines.length - 1)) await fade(0, 600);
+    }
+  }
+
   // ✕ – Promise kończy się po kliknięciu
   const closed = new Promise(res => closeBtn.addEventListener('click', res, { once: true }));
 
@@ -210,7 +233,7 @@ export async function openAnchorView({ ownCamera = true, hint = '' } = {}) {
 
   return {
     layer, controls, closed,
-    anchor, unanchor, waitFound, close, requestSensors,
+    anchor, unanchor, waitFound, showTexts, close, requestSensors,
     guide(it) { guided = it; },
     setHint(t) { baseHint = t || ''; },
     get running() { return running; },
