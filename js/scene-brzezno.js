@@ -118,6 +118,7 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
     topEl.style.opacity    = '';
     bottomEl.style.opacity = '';
     bottomEl.style.pointerEvents = '';
+    overlay.style.pointerEvents  = '';
     labelEl.textContent = '';
     hintEl.textContent  = '';
     bottomEl.innerHTML  = ORIG_BOTTOM;
@@ -166,6 +167,7 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
     if (heading === null && running && !triggered) {
       hintEl.textContent = 'Brak kompasu – dotknij ekranu, aby uruchomić';
       arrowEl.style.display = 'none';
+      overlay.style.pointerEvents = 'auto';
       overlay.addEventListener('click', onTap, { once: true });
     }
   }, 5000);
@@ -192,6 +194,7 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
   function onTap() { triggerSequence(); }
 
   if (devMode) {
+    overlay.style.pointerEvents = 'auto';
     overlay.addEventListener('click', onTap, { once: true });
   }
 
@@ -224,12 +227,14 @@ export async function startBrzeznoScene({ origin, sceneTarget, overlay, onEnd, d
         aimStart = null;
         xhair.classList.remove('aim-ready');
         countEl.textContent = '';
-        hintEl.textContent = diff > 0 ? 'Obróć w prawo →' : '← Obróć w lewo';
+        if (!devMode) {
+          hintEl.textContent = diff > 0 ? 'Obróć w prawo →' : '← Obróć w lewo';
+        }
       }
     }
     requestAnimationFrame(aimLoop);
   }
-  if (!devMode) requestAnimationFrame(aimLoop);
+  requestAnimationFrame(aimLoop);
 
   // 6. Sekwencja narracyjna
   async function playSequence() {
