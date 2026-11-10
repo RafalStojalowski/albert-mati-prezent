@@ -139,38 +139,52 @@
   let arModule = null;
   let arActive = false;
 
-  // Ostatnio odwiedzony punkt z obiektami AR
-  function unlockedArSpot() {
+  // Ostatnio odwiedzony punkt z kamerą (AR lub scena)
+  function unlockedCameraSpot() {
     for (let i = CFG.spots.length - 1; i >= 0; i--) {
-      if (CFG.spots[i].ar && progress.visited.includes(CFG.spots[i].id)) return CFG.spots[i];
+      const s = CFG.spots[i];
+      if ((s.ar || s.scene) && progress.visited.includes(s.id)) return s;
     }
     return null;
   }
 
   function updateArButton() {
-    const spot = unlockedArSpot();
+    const spot = unlockedCameraSpot();
     $('btnAr').classList.toggle('hidden', !spot || arActive);
-    // Wczytujemy moduł AR zawczasu, żeby start po stuknięciu był natychmiastowy
-    if (spot && !arModule) arModule = import(AR_MODULE_URL);
+    // Wczytaj moduł AR z wyprzedzeniem tylko jeśli punkt ma AR (nie scenę)
+    if (spot && spot.ar && !arModule) arModule = import(AR_MODULE_URL);
   }
 
   async function openAr() {
-    const spot = unlockedArSpot();
+    const spot = unlockedCameraSpot();
     if (!spot || arActive) return;
-    // Liczymy od aktualnej pozycji gracza, jeśli GPS jest dokładny; inaczej od punktu
     const origin = playerPos && lastAccuracy <= 25
       ? { lat: playerPos.lat, lng: playerPos.lng }
       : { lat: spot.lat, lng: spot.lng };
     arActive = true;
     updateArButton();
+    const onEnd = () => { arActive = false; updateArButton(); };
     try {
-      const mod = await arModule;
-      await mod.startAR({
-        origin,
-        targets: spot.ar.targets,
-        overlay: $('arOverlay'),
-        onEnd: () => { arActive = false; updateArButton(); },
-      });
+      if (spot.scene && spot.scene.type === 'brzezno') {
+        const SCENE_URL = new URL('js/scene-brzezno.js', document.baseURI).href;
+        const mod = await import(SCENE_URL);
+        await mod.startBrzeznoScene({
+          origin,
+          sceneTarget: spot.scene.target,
+          overlay: $('arOverlay'),
+          onEnd,
+          devMode: devModeActive,
+        });
+      } else if (spot.ar) {
+        if (!arModule) arModule = import(AR_MODULE_URL);
+        const mod = await arModule;
+        await mod.startAR({
+          origin,
+          targets: spot.ar.targets,
+          overlay: $('arOverlay'),
+          onEnd,
+        });
+      }
     } catch (e) {
       console.error(e);
       arActive = false;

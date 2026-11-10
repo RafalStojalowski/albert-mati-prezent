@@ -17,7 +17,12 @@ window.GAME_CONFIG = {
       name: 'Plaża Brzeźno',
       lat: 54.4030,
       lng: 18.5942,
-      radius: 50, // większy promień – obszar plaży
+      radius: 50,
+      scene: {
+        type: 'brzezno',
+        // Punkt nad morzem, w który trzeba wycelować (~220 m od brzegu, prosto na północ)
+        target: { lat: 54.4050, lng: 18.5942 },
+      },
     },
     {
       id: 'zaspa-1',
