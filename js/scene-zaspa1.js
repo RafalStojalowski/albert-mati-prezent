@@ -106,7 +106,8 @@ export async function startZaspa1Scene({ origin, sceneTarget, enterRadius, overl
     running = false;
     if (watchId !== null) navigator.geolocation.clearWatch(watchId);
     window.removeEventListener('resize', onResize);
-    window.removeEventListener(orientEvt, onOrient);
+    if (orientEvtAbs) window.removeEventListener(orientEvtAbs, onOrientAbs);
+    window.removeEventListener('deviceorientation', onOrientRel);
     stream.getTracks().forEach(t => t.stop());
     video.remove();
     renderer.setAnimationLoop(null);
@@ -122,11 +123,11 @@ export async function startZaspa1Scene({ origin, sceneTarget, enterRadius, overl
   async function triggerEnter() {
     if (entered || !running) return;
     entered = true;
-    // Zamknij AR
     running = false;
     if (watchId !== null) navigator.geolocation.clearWatch(watchId);
     window.removeEventListener('resize', onResize);
-    window.removeEventListener(orientEvt, onOrient);
+    if (orientEvtAbs) window.removeEventListener(orientEvtAbs, onOrientAbs);
+    window.removeEventListener('deviceorientation', onOrientRel);
     stream.getTracks().forEach(t => t.stop());
     video.remove();
     renderer.setAnimationLoop(null);
@@ -166,21 +167,19 @@ export async function startZaspa1Scene({ origin, sceneTarget, enterRadius, overl
     );
   }
 
-  // Kompas → obrót sceny
-  let compassH    = null;
-  let offset      = null;
-  const orientEvt = 'ondeviceorientationabsolute' in window
-    ? 'deviceorientationabsolute'
-    : 'deviceorientation';
+  // Kompas → obrót sceny (dual listener: absolute + relative fallback)
+  let compassH     = null;
+  let gotAbsolute  = false;
+  let offset       = null;
+  const orientEvtAbs = 'ondeviceorientationabsolute' in window
+    ? 'deviceorientationabsolute' : null;
 
   const euler = new THREE.Euler();
   const q0    = new THREE.Quaternion();
   const q1    = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
   const zee   = new THREE.Vector3(0, 0, 1);
 
-  function onOrient(e) {
-    if (e.alpha == null) return;
-    if (orientEvt === 'deviceorientation' && !e.absolute) return;
+  function applyOrientation(e) {
     compassH = compassHeading(e.alpha, e.beta, e.gamma);
     const orient = (screen.orientation ? screen.orientation.angle : window.orientation || 0) * DEG;
     euler.set(e.beta * DEG, e.alpha * DEG, -e.gamma * DEG, 'YXZ');
@@ -189,7 +188,6 @@ export async function startZaspa1Scene({ origin, sceneTarget, enterRadius, overl
       .multiply(q1)
       .multiply(q0.setFromAxisAngle(zee, -orient));
 
-    // Kalibracja kompasowa przy pierwszym odczycie
     if (offset === null && compassH !== null) {
       const { x, north } = geoOffset(playerPos, sceneTarget);
       const targetBearing = (Math.atan2(x, north) / DEG + 360) % 360;
@@ -201,7 +199,19 @@ export async function startZaspa1Scene({ origin, sceneTarget, enterRadius, overl
       geoGroup.rotation.y = -offset * DEG;
     }
   }
-  window.addEventListener(orientEvt, onOrient);
+
+  function onOrientAbs(e) {
+    if (e.alpha == null) return;
+    gotAbsolute = true;
+    applyOrientation(e);
+  }
+  function onOrientRel(e) {
+    if (e.alpha == null || gotAbsolute) return;
+    applyOrientation(e);
+  }
+
+  if (orientEvtAbs) window.addEventListener(orientEvtAbs, onOrientAbs);
+  window.addEventListener('deviceorientation', onOrientRel);
 
   function onResize() {
     camera.aspect = window.innerWidth / window.innerHeight;

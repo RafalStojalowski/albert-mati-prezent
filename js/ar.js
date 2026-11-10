@@ -75,16 +75,23 @@ function loadImageTexture(url) {
 
 function createCompass() {
   const state = { heading: null, time: 0, alpha: null, beta: null, gamma: null };
-  const eventName = 'ondeviceorientationabsolute' in window ? 'deviceorientationabsolute' : 'deviceorientation';
-  function onOrient(e) {
-    if (e.alpha == null) return;
-    if (eventName === 'deviceorientation' && !e.absolute) return;
+  let gotAbsolute = false;
+  const absEvt = 'ondeviceorientationabsolute' in window ? 'deviceorientationabsolute' : null;
+
+  function apply(e) {
     state.alpha = e.alpha; state.beta = e.beta; state.gamma = e.gamma;
     state.heading = compassHeading(e.alpha, e.beta, e.gamma);
     state.time = performance.now();
   }
-  window.addEventListener(eventName, onOrient);
-  state.stop = () => window.removeEventListener(eventName, onOrient);
+  function onAbs(e) { if (e.alpha != null) { gotAbsolute = true; apply(e); } }
+  function onRel(e) { if (e.alpha != null && !gotAbsolute) apply(e); }
+
+  if (absEvt) window.addEventListener(absEvt, onAbs);
+  window.addEventListener('deviceorientation', onRel);
+  state.stop = () => {
+    if (absEvt) window.removeEventListener(absEvt, onAbs);
+    window.removeEventListener('deviceorientation', onRel);
+  };
   return state;
 }
 
