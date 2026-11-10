@@ -488,6 +488,30 @@ html, body {
   object-fit: contain;
 }
 
+/* ---------- Dymek mowy – placeholder nagrań wideo ---------- */
+.przemo-video-speech {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2600;
+  width: 85%;
+  max-width: 380px;
+  padding: 18px 22px;
+  background: rgba(0, 0, 0, 0.82);
+  border-radius: 16px;
+  color: #fff;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1.5;
+}
+.przemo-video-speech p { margin: 0 0 6px; }
+.przemo-video-speech .tap-hint {
+  margin-top: 14px;
+  font-size: 13px;
+  opacity: 0.55;
+}
+
 /* Przycisk "Wejdź" w scenie zaspa1 */
 .ar-btn-enter {
   min-width: 120px;
