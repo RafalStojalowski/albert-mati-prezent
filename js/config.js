@@ -1,10 +1,10 @@
 // Konfiguracja gry – tutaj podmieniasz punkty, promień zaliczenia itp.
 window.GAME_CONFIG = {
   // Klucz w localStorage – zmień, aby wyzerować postęp wszystkim graczom
-  storageKey: 'zaspa-gra-v2',
+  storageKey: 'zaspa-gra-v3',
 
   // Środek mapy na starcie
-  mapCenter: [54.3940, 18.6010],
+  mapCenter: [54.3960, 18.5990],
   mapZoom: 14,
 
   // Z jakiej odległości (w metrach) punkt uznajemy za odwiedzony
@@ -12,73 +12,90 @@ window.GAME_CONFIG = {
 
   // Punkty są sekwencyjne – każdy odblokowany dopiero po zaliczeniu poprzedniego.
   spots: [
+    // 1) Plaża Brzeźno – jedyny punkt widoczny od startu
     {
       id: 'brzezno-plaza',
-      name: 'Plaża Brzeźno',
-      lat: 54.4030,
-      lng: 18.5942,
+      lat: 54.4121,
+      lng: 18.6289,
       radius: 50,
       scene: {
         type: 'brzezno',
-        // Punkt nad morzem, w który trzeba wycelować (~220 m od brzegu, prosto na północ)
-        target: { lat: 54.4050, lng: 18.5942 },
+        target: { lat: 54.4141, lng: 18.6289 },
       },
     },
+    // 2) Pętla tramwajowa
     {
       id: 'zaspa-1',
-      name: 'Pętla tramwajowa',
-      lat: 54.3960,
-      lng: 18.6018,
-      hidden: true,       // znacznik niewidoczny dopóki gracz nie jest blisko
-      revealRadius: 500,  // metry – pokaż znacznik + toast
+      lat: 54.3998,
+      lng: 18.5951,
+      hidden: true,
+      revealRadius: 500,
       scene: {
         type: 'zaspa1',
-        target: { lat: 54.3960, lng: 18.6018 }, // GPS gdzie stoi AR-owe zdjęcie
-        enterRadius: 6,  // metry – wejście w zdjęcie odpala minigrę
+        target: { lat: 54.3996, lng: 18.5953 },
+        enterRadius: 6,
       },
     },
+    // 3) Radziun – pod blokiem
     {
-      id: 'zaspa-2',
-      name: 'Zaspa – Murale',
-      lat: 54.3948,
-      lng: 18.6052,
+      id: 'zaspa-radziun',
+      lat: 54.3955,
+      lng: 18.6110,
+      hidden: true,
+      revealRadius: 500,
+      scene: {
+        type: 'radziun',
+        target: { lat: 54.3955, lng: 18.6110 },
+        enterRadius: 8,
+      },
     },
+    // 4) PZU
     {
-      id: 'zaspa-3',
-      name: 'Zaspa – Rynek',
-      lat: 54.3918,
-      lng: 18.6068,
+      id: 'zaspa-pzu',
+      lat: 54.3934,
+      lng: 18.6092,
+      hidden: true,
+      revealRadius: 500,
+      scene: {
+        type: 'pzu',
+        target: { lat: 54.3937, lng: 18.6093 },
+      },
     },
+    // 5) Kort tenisowy
     {
-      id: 'zaspa-4',
-      name: 'Zaspa – Boisko',
-      lat: 54.3895,
-      lng: 18.6052,
+      id: 'zaspa-kort',
+      lat: 54.3890,
+      lng: 18.5994,
+      hidden: true,
+      revealRadius: 500,
+      scene: {
+        type: 'kort',
+        target: { lat: 54.3889, lng: 18.5992 },
+        enterRadius: 6,
+      },
     },
+    // 6) Sahara
     {
-      id: 'zaspa-5',
-      name: 'Zaspa – Skwer',
-      lat: 54.3870,
-      lng: 18.6055,
+      id: 'zaspa-sahara',
+      lat: 54.3942,
+      lng: 18.5939,
+      hidden: true,
+      revealRadius: 500,
+      scene: {
+        type: 'sahara',
+        target: { lat: 54.3944, lng: 18.5942 },
+      },
     },
+    // 7) Wiadukt – finał
     {
       id: 'wiadukt',
-      name: 'Wiadukt',
-      lat: 54.3845,
-      lng: 18.6058,
-      // Widok AR z zachowanym obrazem wiaduktu.
-      // Zastąp src/rataj.jpg swoim zdjęciem wiaduktu i dostosuj współrzędne targetu.
-      ar: {
-        targets: [
-          {
-            name: 'Wiadukt Zaspa',
-            lat: 54.3835,
-            lng: 18.6060,
-            image: 'src/rataj.jpg',
-            width: 50,
-            elevation: 4,
-          },
-        ],
+      lat: 54.3945,
+      lng: 18.5999,
+      hidden: true,
+      revealRadius: 500,
+      scene: {
+        type: 'wiadukt',
+        target: { lat: 54.3946, lng: 18.6018 },
       },
     },
   ],

@@ -95,9 +95,10 @@
   }
 
   function spotIcon(index, state) {
+    const label = state === 'visited' ? '✓' : '?';
     return L.divIcon({
       className: 'spot-icon',
-      html: `<div class="spot ${state}">${state === 'visited' ? '✓' : index + 1}</div>`,
+      html: `<div class="spot ${state}">${label}</div>`,
       iconSize: [36, 36],
       iconAnchor: [18, 18],
       popupAnchor: [0, -20],
@@ -106,14 +107,14 @@
 
   function spotPopup(spot, index) {
     const state = spotState(index);
-    let html = `<b>${spot.name}</b><br>`;
+    let html = '';
     if (state === 'visited') {
       html += 'Odwiedzony ✓';
     } else if (state === 'active') {
       html += 'Aktywny cel!';
       if (playerPos) html += `<br>Odległość: ${formatDistance(distance(playerPos, spot))}`;
     } else {
-      html += 'Zablokowany – odwiedź wcześniejsze punkty najpierw';
+      html += 'Zablokowany';
     }
     return html;
   }
@@ -137,7 +138,10 @@
       const { marker, index } = spotMarkers[spot.id];
       marker.setIcon(isHiddenSpot(spot) ? INVISIBLE_ICON : spotIcon(index, spotState(index)));
     });
-    $('progress').textContent = `${progress.visited.length}/${CFG.spots.length}${devModeActive ? ' 🛠' : ''}`;
+    const pTxt = devModeActive
+      ? `${progress.visited.length}/${CFG.spots.length} 🛠`
+      : (progress.visited.length > 0 ? `✓ ${progress.visited.length}` : '');
+    $('progress').textContent = pTxt;
     updateArButton();
   }
 
@@ -228,11 +232,9 @@
       refreshSpots();
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
       if (progress.visited.length === CFG.spots.length) {
-        toast('Dotarłeś do wiaduktu! Otwórz kamerę i spójrz na wiadukt!', 8000);
+        toast('Gratulacje! To ostatni punkt. Otwórz kamerę!', 8000);
       } else {
-        const nextIdx = nextActiveIndex();
-        const nextSpot = CFG.spots[nextIdx];
-        toast(`Punkt ${activeIdx + 1} zaliczony: ${spot.name}! Idź do: ${nextSpot.hidden ? '???' : nextSpot.name}`, 5000);
+        toast(`Punkt zaliczony! Rozejrzyj się w okolicy…`, 5000);
       }
       if (spot.ar || spot.scene) setTimeout(() => toast('Odblokowano kamerę! 📷', 4000), 3500);
     }
@@ -509,13 +511,17 @@
     saveProgress();
     refreshSpots();
     if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    // Ujawnij punkt jeśli był ukryty
+    if (spot.hidden && !progress.revealed.includes(spot.id)) {
+      progress.revealed.push(spot.id);
+    }
     if (progress.visited.length === CFG.spots.length) {
       toast('[DEV] Wszystkie punkty zaliczone! Otwórz kamerę 📷', 8000);
     } else {
       const nextIdx = nextActiveIndex();
-      toast(`[DEV] ${spot.name} → ${CFG.spots[nextIdx].name}`, 4000);
+      toast(`[DEV] #${activeIdx + 1} → #${nextIdx + 1}`, 4000);
     }
-    if (spot.ar) setTimeout(() => toast('Odblokowano kamerę! 📷', 4000), 3500);
+    if (spot.ar || spot.scene) setTimeout(() => toast('Odblokowano kamerę! 📷', 4000), 3500);
     $('menu').classList.add('hidden');
   });
 
